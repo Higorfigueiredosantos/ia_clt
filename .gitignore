@@ -1,0 +1,22 @@
+# Credenciais e segredos
+.env
+credentials.json
+token.json
+
+# Temporários
+.tmp/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# IDEs
+.vscode/
+.idea/
+
+# Claude Code
+.claude/

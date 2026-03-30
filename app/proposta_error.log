@@ -1,0 +1,86 @@
+[_gerar_proposta] dados_tomador:
+{
+  "name": "higor santos",
+  "email": "luis26@gmail.com",
+  "phone": {
+    "country_code": "55",
+    "area_code": "35",
+    "number": "98722790"
+  },
+  "birth_date": "1995-09-16",
+  "mother_name": "IRACEMA MARQUES",
+  "gender": "male",
+  "marital_status": "single",
+  "individual_document_number": "47001475807",
+  "document_identification_number": "178372",
+  "document_identification_date": "2019-03-15",
+  "document_issuer": "SSP",
+  "document_identification_type": "rg",
+  "political_exposition": false,
+  "nationality": "Brasileiro",
+  "person_type": "natural",
+  "address": {
+    "postal_code": "37150000",
+    "street": "Rua um",
+    "number": "10",
+    "neighborhood": "Centro",
+    "city": "Carmo do Rio claro",
+    "state": "MG",
+    "complement": ""
+  },
+  "bank": {
+    "transfer_method": "pix",
+    "pix_key": "47001475807",
+    "pix_key_type": "cpf"
+  },
+  "work_data": {
+    "employer_name": "DESTILARIA TIROLLI LTDA",
+    "employer_document_number": "53800207",
+    "registration_number": "0001.000001225"
+  }
+}
+Erro: 422 Client Error: Unprocessable Entity for url: https://v8-bff-prod.yellowisland-b252a8a0.eastus.azurecontainerapps.io/private-consignment/operation
+
+[_gerar_proposta] dados_tomador:
+{
+  "name": "higor santos",
+  "email": "luis26@gmail.com",
+  "phone": {
+    "country_code": "55",
+    "area_code": "35",
+    "number": "98722790"
+  },
+  "birth_date": "1995-09-16",
+  "mother_name": "IRACEMA MARQUES",
+  "gender": "male",
+  "marital_status": "single",
+  "individual_document_number": "47001475807",
+  "document_identification_number": "158964",
+  "document_identification_date": "2017-03-18",
+  "document_issuer": "SSP",
+  "document_identification_type": "rg",
+  "political_exposition": false,
+  "nationality": "Brasileiro",
+  "person_type": "natural",
+  "address": {
+    "postal_code": "37150000",
+    "street": "Rua um",
+    "number": "10",
+    "neighborhood": "Centro",
+    "city": "Carmo do Rio Claro",
+    "state": "MG",
+    "complement": ""
+  },
+  "bank": {
+    "transfer_method": "pix",
+    "pix_key": "47001475807",
+    "pix_key_type": "cpf"
+  },
+  "work_data": {
+    "employer_name": "DESTILARIA TIROLLI LTDA",
+    "employer_document_number": "53800207",
+    "registration_number": "0001.000001225"
+  }
+}
+Erro: 422 Client Error: Unprocessable Entity for url: https://v8-bff-prod.yellowisland-b252a8a0.eastus.azurecontainerapps.io/private-consignment/operation
+

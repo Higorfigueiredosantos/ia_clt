@@ -1,0 +1,101 @@
+
+============================================================
+  SERVIDOR ONLINE
+============================================================
+  URL local:   http://localhost:8000
+  URL pública: https://maren-fervid-nonmechanically.ngrok-free.dev
+
+  Configure no Meta for Developers:
+  Webhook URL: https://maren-fervid-nonmechanically.ngrok-free.dev/webhook
+  Verify Token: clt_verify_token_2026
+============================================================
+
+INFO:     Started server process [4472]
+INFO:     Waiting for application startup.
+[followup] Serviço iniciado — verificando a cada 5 minutos
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     2600:1f18:5427:6502:7f65:7c70:ecf4:ec1d:0 - "POST / HTTP/1.1" 200 OK
+[webhook] msg_id=wamid.HBgMNTUzNDg0MzI2Mjk2FQIAEhgUM0FGNzRGNDBDN0UyNjdGQjcyQjgA dup=False
+[webhook] chamando handle_message phone=553484326296 text='reseti'
+[ai_agent] state=CONFIRM_SIMULATION -> GREETING reply='? Conversa reiniciada! Hist?rico e dados apagados.'
+[ai_agent] mensagem enviada ok
+[webhook] handle_message concluído
+INFO:     2600:1f18:5427:6501:2e29:353:b0b6:e71b:0 - "POST / HTTP/1.1" 200 OK
+INFO:     2600:1f18:5427:6502:e676:6a58:8ad6:23e3:0 - "POST / HTTP/1.1" 200 OK
+INFO:     2600:1f16:14f1:d502:e0c1:2e5:1818:634d:0 - "POST / HTTP/1.1" 200 OK
+[webhook] msg_id=wamid.HBgMNTUzNDg0MzI2Mjk2FQIAEhgUM0EyQTY4ODI2RjU1OTRENzhFOEQA dup=False
+[webhook] chamando handle_message phone=553484326296 text='oi'
+[ai_agent] state=GREETING -> WAITING_SIMULATION_CONFIRM reply='Ol?! Meu nome ? Kelly Silva, fa?o parte do time de especiali'
+[ai_agent] mensagem enviada ok
+[webhook] handle_message concluído
+INFO:     2600:1f16:14f1:d502:82f0:b2da:a167:eba0:0 - "POST / HTTP/1.1" 200 OK
+INFO:     2600:1f18:5427:650b:90e:c493:5ee8:4763:0 - "POST / HTTP/1.1" 200 OK
+INFO:     2600:1f18:5427:6507:36bf:5640:dfaa:9b51:0 - "POST / HTTP/1.1" 200 OK
+[webhook] msg_id=wamid.HBgMNTUzNTk4NzIyNzkwFQIAEhgUM0EyMUY3NENFQjBBM0FFNUQyRTYA dup=False
+[webhook] chamando handle_message phone=553598722790 text='reseti'
+[ai_agent] state=WAITING_CPF -> GREETING reply='? Conversa reiniciada! Hist?rico e dados apagados.'
+[ai_agent] mensagem enviada ok
+[webhook] handle_message concluído
+INFO:     2600:1f16:14f1:d505:89da:8e82:6a0c:39e7:0 - "POST / HTTP/1.1" 200 OK
+INFO:     2600:1f18:5427:6509:5b8d:e961:f95d:a7f0:0 - "POST / HTTP/1.1" 200 OK
+INFO:     2600:1f16:14f1:d50b:a42d:78b4:e4fd:e3e6:0 - "POST / HTTP/1.1" 200 OK
+[webhook] msg_id=wamid.HBgMNTUzNTk4NzIyNzkwFQIAEhgUM0EyNEQxMjUzN0I1NDIzNTE5QzEA dup=False
+[webhook] chamando handle_message phone=553598722790 text='ola'
+[ai_agent] state=GREETING -> WAITING_SIMULATION_CONFIRM reply='Ol?! Meu nome ? Kelly Silva, fa?o parte do time de especiali'
+INFO:     2600:1f18:5427:650b:afe8:5f:1a81:904:0 - "POST / HTTP/1.1" 200 OK
+[webhook] msg_id=wamid.HBgMNTUzNDg0MzI2Mjk2FQIAEhgUM0FEQzY1OTIwRDAyODQ3NzlDNTEA dup=False
+[webhook] chamando handle_message phone=553484326296 text='sim'
+[ai_agent] state=WAITING_SIMULATION_CONFIRM -> WAITING_CPF reply='?timo! Para simular, preciso do seu CPF. Pode me informar?'
+[ai_agent] mensagem enviada ok
+[webhook] handle_message concluído
+INFO:     2600:1f16:14f1:d502:2a28:5a79:5db5:bd4d:0 - "POST / HTTP/1.1" 200 OK
+INFO:     2600:1f18:5427:650a:fe92:86db:b6bd:8f56:0 - "POST / HTTP/1.1" 200 OK
+[ai_agent] mensagem enviada ok
+[webhook] handle_message concluído
+INFO:     2600:1f16:14f1:d501:b153:470a:a011:d3f3:0 - "POST / HTTP/1.1" 200 OK
+INFO:     2600:1f18:5427:6508:fd40:5ac0:b83a:ba52:0 - "POST / HTTP/1.1" 200 OK
+INFO:     2600:1f16:14f1:d508:8840:79bc:f934:d367:0 - "POST / HTTP/1.1" 200 OK
+[webhook] msg_id=wamid.HBgMNTUzNTk4NzIyNzkwFQIAEhgUM0E5Njc2RjcxOUZFQzUwMTMyOTkA dup=False
+[webhook] chamando handle_message phone=553598722790 text='sim'
+[ai_agent] state=WAITING_SIMULATION_CONFIRM -> WAITING_CPF reply='?timo! Para simular, preciso do seu CPF. Pode me informar?'
+[ai_agent] mensagem enviada ok
+[webhook] handle_message concluído
+INFO:     2600:1f16:14f1:d509:b5d0:ed92:73c8:3c67:0 - "POST / HTTP/1.1" 200 OK
+INFO:     2600:1f18:5427:6502:3ba0:b9b6:a236:e36d:0 - "POST / HTTP/1.1" 200 OK
+INFO:     2600:1f18:5427:6509:ec70:f78b:9caf:26b4:0 - "POST / HTTP/1.1" 200 OK
+[webhook] msg_id=wamid.HBgMNTUzNDg0MzI2Mjk2FQIAEhgUM0EzRUJFNDYyQjA1RDVEM0REMTcA dup=False
+[webhook] chamando handle_message phone=553484326296 text='147.870.776-35'
+INFO:     2600:1f18:5427:6506:e96d:d105:60d:ddad:0 - "POST / HTTP/1.1" 200 OK
+[webhook] msg_id=wamid.HBgMNTUzNTk4NzIyNzkwFQIAEhgUM0FCMzUyNzk1Qjg0MzE5QjAxNEMA dup=False
+[webhook] chamando handle_message phone=553598722790 text='000.614.485-32'
+INFO:     2600:1f18:5427:650a:42d1:176d:7dab:9886:0 - "POST / HTTP/1.1" 200 OK
+INFO:     2600:1f18:5427:6506:dddb:8a12:8c37:8779:0 - "POST / HTTP/1.1" 200 OK
+INFO:     2600:1f16:14f1:d508:c0f:1420:d7fc:40ea:0 - "POST / HTTP/1.1" 200 OK
+INFO:     2600:1f18:5427:6504:3547:27e6:f302:e93:0 - "POST / HTTP/1.1" 200 OK
+INFO:     2600:1f18:5427:6502:a0a8:ced4:f2d:cc1f:0 - "POST / HTTP/1.1" 200 OK
+[executar_fluxo_consulta] Status inicial: WAITING_CONSENT
+[buscar_consulta_ativa] e640630f-9dec-4ef5-84d8-6ed9d291094d status=WAITING_CONSENT
+[gerar_consulta] Reutilizando consulta existente: e640630f-9dec-4ef5-84d8-6ed9d291094d
+[executar_fluxo_consulta] Status inicial: WAITING_CONSENT
+[executar_fluxo_consulta] Aguardando 30s apos autorizacao...
+[executar_fluxo_consulta] Pre-check falhou (400 Client Error: Bad Request for url: https://v8-bff-prod.yellowisland-b252a8a0.eastus.azurecontainerapps.io/private-consignment/consult/e640630f-9dec-4ef5-84d8-6ed9d291094d/authorize), autorizando mesmo assim...
+[executar_fluxo_consulta] Autorizacao falhou: 400 Client Error: Bad Request for url: https://v8-bff-prod.yellowisland-b252a8a0.eastus.azurecontainerapps.io/private-consignment/consult/e640630f-9dec-4ef5-84d8-6ed9d291094d/authorize
+[executar_fluxo_consulta] Aguardando 30s apos autorizacao...
+[executar_fluxo_consulta] Tentativa 1/3: status=WAITING_CREDIT_ANALYSIS
+[executar_fluxo_consulta] Tentativa 1/3: status=SUCCESS
+[simulacao] pre_calcular: 8 opcoes: ['6', '8', '10', '12', '18', '24', '36', '48']
+[simulacao] margem=134.27 recommended=134.27 maxOpcao=134.27 valor_final=134.27 parcelas=18
+[ai_agent] state=WAITING_CPF -> CONFIRM_SIMULATION reply='Simula??o realizada! ?\n\n? Valor liberado: R$ 1148.48\n? Parce'
+[ai_agent] mensagem enviada ok
+[webhook] handle_message concluído
+INFO:     2600:1f16:14f1:d50a:56a6:dc3e:f74c:1e12:0 - "POST / HTTP/1.1" 200 OK
+INFO:     2600:1f18:5427:6507:2d5e:ae4:6ebc:7990:0 - "POST / HTTP/1.1" 200 OK
+[executar_fluxo_consulta] Tentativa 2/3: status=SUCCESS
+[simulacao] pre_calcular: 8 opcoes: ['6', '8', '10', '12', '18', '24', '36', '48']
+[simulacao] margem=134.27 recommended=134.27 maxOpcao=134.27 valor_final=134.27 parcelas=18
+[ai_agent] state=WAITING_CPF -> CONFIRM_SIMULATION reply='Simula??o realizada! ?\n\n? Valor liberado: R$ 1148.48\n? Parce'
+[ai_agent] mensagem enviada ok
+[webhook] handle_message concluído
+INFO:     2600:1f16:14f1:d501:97f2:bf81:9211:ccba:0 - "POST / HTTP/1.1" 200 OK
+INFO:     2600:1f16:14f1:d504:b555:ff0f:79d0:c88b:0 - "POST / HTTP/1.1" 200 OK
