@@ -1,0 +1,20 @@
+services:
+  ia_clt:
+    build: .
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - WHATSAPP_TOKEN=${WHATSAPP_TOKEN}
+      - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID}
+      - WHATSAPP_BUSINESS_ID=${WHATSAPP_BUSINESS_ID}
+      - WHATSAPP_VERIFY_TOKEN=${WHATSAPP_VERIFY_TOKEN}
+      - V8_AUTH_URL=${V8_AUTH_URL}
+      - V8_CLIENT_ID=${V8_CLIENT_ID}
+      - V8_USERNAME=${V8_USERNAME}
+      - V8_PASSWORD=${V8_PASSWORD}
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+      - PORT=8000
