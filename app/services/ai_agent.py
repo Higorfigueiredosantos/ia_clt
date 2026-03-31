@@ -1,5 +1,6 @@
 import re
 import asyncio
+from datetime import datetime, timezone, timedelta
 from openai import OpenAI
 from tools.crm.kanban import atualizar_kanban
 from app.config import config
@@ -44,7 +45,60 @@ _KANBAN_STAGES: dict[str, str] = {
     "FACTA_WAITING_CONSENT":            "Autorizar Termo Facta",
     "FACTA_WAITING_ALT_PHONE":          "Autorizar Termo Facta",
     "PROPOSAL_SENT":                    "Proposta gerada",
+    "WAITING_SCHEDULE_TIME":            "Agendamento",
+    "SCHEDULED":                        "Agendamento",
 }
+
+# Estados onde NÃO deve detectar "ocupado"
+_ESTADOS_SEM_AGENDAMENTO = {
+    State.GREETING, State.PROPOSAL_SENT, State.HUMAN_HANDOFF,
+    State.RUNNING_SIMULATION, State.SCHEDULED, State.WAITING_SCHEDULE_TIME,
+    State.ERROR,
+}
+
+_FRASES_OCUPADO = (
+    "mais tarde", "mais tarde", "ocupado", "ocupada", "no serviço", "no trabalho",
+    "trabalhando", "trabalhando", "agora nao", "agora não", "nao posso agora",
+    "não posso agora", "posso falar depois", "me chame", "me liga depois",
+    "to no servico", "tô no serviço", "to trabalhando", "tô trabalhando",
+    "estou no servico", "estou no serviço", "depois eu", "falo depois",
+    "chama depois", "pode chamar depois", "tô ocupado", "to ocupado",
+)
+
+_BR_TZ = timezone(timedelta(hours=-3))
+
+
+def _detectar_ocupado(text: str) -> bool:
+    t = text.lower()
+    return any(f in t for f in _FRASES_OCUPADO)
+
+
+def _calcular_horario_agendamento(text: str) -> str:
+    """Retorna ISO timestamp (com tz) do horário agendado baseado no texto ou horário atual."""
+    agora_br = datetime.now(_BR_TZ)
+    t = text.lower()
+
+    # Tenta extrair hora específica: "15", "15:30", "15h", "15h30"
+    m = re.search(r'\b(\d{1,2})(?:[:h](\d{2}))?\s*h?\b', t)
+    if m:
+        hora = int(m.group(1))
+        minuto = int(m.group(2) or 0)
+        if 0 <= hora <= 23:
+            agendado = agora_br.replace(hour=hora, minute=minuto, second=0, microsecond=0)
+            if agendado <= agora_br:
+                agendado += timedelta(days=1)
+            return agendado.isoformat()
+
+    # Sem horário específico — usa regra pelo horário atual
+    hora_atual = agora_br.hour + agora_br.minute / 60
+    if 6 <= hora_atual < 11.5:
+        agendado = agora_br.replace(hour=12, minute=0, second=0, microsecond=0)
+    elif 12 <= hora_atual < 17:
+        agendado = agora_br.replace(hour=17, minute=15, second=0, microsecond=0)
+    else:
+        amanha = agora_br + timedelta(days=1)
+        agendado = amanha.replace(hour=9, minute=0, second=0, microsecond=0)
+    return agendado.isoformat()
 
 GREETING_MESSAGE = (
     "Olá! Meu nome é Kelly Silva, faço parte do time de especialistas.\n\n"
@@ -226,6 +280,40 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             reset_conversation(conv_id)
             update_user(user["id"], {"cpf": None, "birth_date": None, "gender": None})
         return "🔄 Conversa reiniciada! Histórico e dados apagados.", State.GREETING, {}
+
+    # ── DETECÇÃO DE OCUPADO (qualquer estado, exceto os bloqueados) ───────────
+    if state not in _ESTADOS_SEM_AGENDAMENTO and _detectar_ocupado(text):
+        return (
+            "Compreendo! 😊\n\n"
+            "Por gentileza, me informe um horário que fique bom para voltarmos com o atendimento?"
+        ), State.WAITING_SCHEDULE_TIME, {"scheduled_resume_state": state.value}
+
+    # ── SCHEDULED (cliente enviou mensagem antes do horário agendado) ─────────
+    if state == State.SCHEDULED:
+        resume_state_str = data.get("scheduled_resume_state", "WAITING_SIMULATION_CONFIRM")
+        try:
+            resumed = State(resume_state_str)
+        except ValueError:
+            resumed = State.WAITING_SIMULATION_CONFIRM
+        clean_data = {k: v for k, v in data.items() if k not in ("scheduled_at", "scheduled_resume_state")}
+        return await _process(resumed, clean_data, text, user, history, conv_id)
+
+    # ── WAITING_SCHEDULE_TIME ─────────────────────────────────────────────────
+    if state == State.WAITING_SCHEDULE_TIME:
+        scheduled_at = _calcular_horario_agendamento(text)
+        resume_state = data.get("scheduled_resume_state", "WAITING_SIMULATION_CONFIRM")
+        # Formata horário para exibir ao cliente
+        try:
+            dt = datetime.fromisoformat(scheduled_at)
+            hora_fmt = dt.strftime("%H:%M")
+        except Exception:
+            hora_fmt = "no horário combinado"
+        return (
+            f"Perfeito! Retornarei o atendimento às {hora_fmt}. Até logo! 😊"
+        ), State.SCHEDULED, {
+            "scheduled_at": scheduled_at,
+            "scheduled_resume_state": resume_state,
+        }
 
     # ── GREETING ──────────────────────────────────────────────────────────────
     if state == State.GREETING:

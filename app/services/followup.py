@@ -18,6 +18,8 @@ _ESTADOS_IGNORAR = {
     "HUMAN_HANDOFF",
     "ERROR",
     "RUNNING_SIMULATION",
+    "WAITING_SCHEDULE_TIME",
+    "SCHEDULED",
 }
 
 # Mensagens contextuais por estado
@@ -142,6 +144,29 @@ def _atualizar_followup(conv_id: str, data_atual: dict, count: int, followup_1_a
     sb.table("conversations").update({"data": novo_data}).eq("id", conv_id).execute()
 
 
+_MENSAGENS_AGENDAMENTO = {
+    "WAITING_SIMULATION_CONFIRM": "Conforme combinado, retomei o atendimento! Você tem interesse em simular seu crédito CLT?",
+    "WAITING_CPF": "Conforme combinado, retomei o atendimento! Para continuar, preciso do seu CPF. Pode me informar?",
+    "CONFIRM_SIMULATION": "Conforme combinado, retomei o atendimento! Sua simulação ainda está disponível. Deseja prosseguir?",
+    "WAITING_CUSTOM_INSTALLMENT": "Conforme combinado, retomei o atendimento! Qual valor de parcela prefere?",
+    "WAITING_CUSTOM_TERM": "Conforme combinado, retomei o atendimento! Qual prazo você prefere para a simulação?",
+    "WAITING_ADDRESS_CEP": "Conforme combinado, retomei o atendimento! Para continuar sua proposta, preciso do seu CEP.",
+    "WAITING_PIX_KEY": "Conforme combinado, retomei o atendimento! Só falta sua chave PIX para concluirmos.",
+    "FACTA_WAITING_CONSENT": "Conforme combinado, retomei o atendimento! Já conseguiu clicar no link de autorização?",
+    "FACTA_CONFIRM_SIMULATION": "Conforme combinado, retomei o atendimento! Tenho uma proposta disponível. Deseja prosseguir?",
+    "FACTA_WAITING_CUSTOM_INSTALLMENT": "Conforme combinado, retomei o atendimento! Qual valor de parcela prefere?",
+    "FACTA_WAITING_CUSTOM_TERM": "Conforme combinado, retomei o atendimento! Qual prazo prefere para a simulação?",
+    "FACTA_WAITING_CEP": "Conforme combinado, retomei o atendimento! Para continuar sua proposta, preciso do seu CEP.",
+    "FACTA_WAITING_PIX_KEY": "Conforme combinado, retomei o atendimento! Só falta sua chave PIX para concluirmos.",
+}
+
+
+def _atualizar_state_conversa(conv_id: str, new_state: str, data_atual: dict) -> None:
+    sb = get_supabase()
+    novo_data = {k: v for k, v in data_atual.items() if k not in ("scheduled_at", "scheduled_resume_state")}
+    sb.table("conversations").update({"state": new_state, "data": novo_data}).eq("id", conv_id).execute()
+
+
 async def verificar_e_enviar_followups():
     """Verifica todas as conversas ativas e envia follow-ups quando necessário."""
     agora = _agora()
@@ -149,12 +174,39 @@ async def verificar_e_enviar_followups():
 
     for conv in conversas:
         state = conv.get("state", "GREETING")
+        data = conv.get("data") or {}
+
+        # ── Agendamentos ──────────────────────────────────────────────────────
+        if state == "SCHEDULED":
+            scheduled_at_str = data.get("scheduled_at", "")
+            if not scheduled_at_str:
+                continue
+            scheduled_at = _parse_dt(scheduled_at_str)
+            if agora < scheduled_at:
+                continue
+            resume_state = data.get("scheduled_resume_state", "WAITING_SIMULATION_CONFIRM")
+            mensagem = _MENSAGENS_AGENDAMENTO.get(resume_state,
+                "Conforme combinado, retomei o atendimento! Como posso ajudar?")
+            phone = _buscar_phone_usuario(conv["user_id"])
+            if not phone:
+                continue
+            crm_conversation_id = data.get("crm_conversation_id", "")
+            crm_channel_id = data.get("crm_channel_id", "")
+            try:
+                await send_text_message(phone, mensagem,
+                                        crm_conversation_id=crm_conversation_id,
+                                        crm_channel_id=crm_channel_id)
+                _atualizar_state_conversa(conv["id"], resume_state, data)
+                print(f"[followup] Agendamento disparado para {phone} -> {resume_state}", flush=True)
+            except Exception as e:
+                print(f"[followup] Erro ao disparar agendamento para {phone}: {e}", flush=True)
+            continue
+
         if state in _ESTADOS_IGNORAR:
             continue
         if state not in _MENSAGENS:
             continue
 
-        data = conv.get("data") or {}
         followup_count = int(data.get("followup_count", 0))
 
         if followup_count >= 2:
