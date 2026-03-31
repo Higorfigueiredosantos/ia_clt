@@ -101,7 +101,7 @@ def _calcular_horario_agendamento(text: str) -> str:
     return agendado.isoformat()
 
 GREETING_MESSAGE = (
-    "Olá! Meu nome é Kelly Silva, faço parte do time de especialistas.\n\n"
+    "Olá! Meu nome é Cassia da Cunha, faço parte do time de especialistas.\n\n"
     "Você tem interesse em simular seu beneficio CLT?"
 )
 
