@@ -32,6 +32,11 @@ openai_client = OpenAI(api_key=config.OPENAI_API_KEY)
 # Lock por telefone para evitar race condition com mensagens simultâneas
 _phone_locks: dict[str, asyncio.Lock] = {}
 
+
+def _brl(valor: float) -> str:
+    """Formata valor monetário no padrão brasileiro: R$ 1.153,84"""
+    return f"R$ {valor:_.2f}".replace("_", "X").replace(".", ",").replace("X", ".")
+
 # Mapeamento de novo estado → estágio no Kanban do CRM
 _KANBAN_STAGES: dict[str, str] = {
     "WAITING_SIMULATION_CONFIRM":       "Lead Novo",
@@ -386,7 +391,7 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
         if quer_outros:
             return (
                 f"Claro! Qual valor de parcela deseja que simule para você?\n"
-                f"(O valor máximo permitido é R$ {margem:.2f})"
+                f"(O valor máximo permitido é {_brl(margem)})"
             ), State.WAITING_CUSTOM_INSTALLMENT, {}
         if quer_prosseguir:
             limpar = {k: None for k in ["address_cep","address_street","address_number",
@@ -406,17 +411,17 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
         margem = data.get("margem_disponivel", 0)
         if not numeros:
             reply = await asyncio.to_thread(_ask_gpt, state, data, user, history,
-                f"O cliente está escolhendo o valor da parcela (máximo R$ {margem:.2f}). "
+                f"O cliente está escolhendo o valor da parcela (máximo {_brl(margem)}). "
                 "Responda a dúvida ou objeção usando o FAQ (ex: se disser 'juros alto', explique que 6,99% ao mês é uma das menores taxas do mercado). "
-                f"Depois pergunte qual valor de parcela seria confortável (máximo R$ {margem:.2f}).")
+                f"Depois pergunte qual valor de parcela seria confortável (máximo {_brl(margem)}).")
             return reply, State.WAITING_CUSTOM_INSTALLMENT, {}
         valor = float(numeros[0].replace(",", "."))
         if valor > margem:
             return (
-                f"O valor máximo disponível é R$ {margem:.2f}. Qual valor dentro desse limite deseja simular?"
+                f"O valor máximo disponível é {_brl(margem)}. Qual valor dentro desse limite deseja simular?"
             ), State.WAITING_CUSTOM_INSTALLMENT, {}
         return (
-            f"Ótimo! Parcelas de R$ {valor:.2f}. Qual prazo prefere? 😊\n(8x, 10x, 12x, 18x, 24x, 36x)"
+            f"Ótimo! Parcelas de {_brl(valor)}. Qual prazo prefere? 😊\n(8x, 10x, 12x, 18x, 24x, 36x)"
         ), State.WAITING_CUSTOM_TERM, {"custom_installment_value": valor}
 
     # ── WAITING_CUSTOM_TERM ───────────────────────────────────────────────────
@@ -541,7 +546,7 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
         quer_prosseguir = bool(re.search(r"\b(sim|confirmo|prosseguir|aceito|vamos|quero|ok|okay)\b", t)) and "?" not in text
         if quer_outros:
             margem = float(data.get("facta_margem") or 0)
-            limite_txt = f"O valor máximo disponível é R$ {margem:.2f}" if margem > 0 else "Informe o valor desejado"
+            limite_txt = f"O valor máximo disponível é {_brl(margem)}" if margem > 0 else "Informe o valor desejado"
             return (
                 f"Claro! Qual valor de parcela deseja que simule para você?\n({limite_txt})"
             ), State.FACTA_WAITING_CUSTOM_INSTALLMENT, {}
@@ -564,7 +569,7 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             return reply, State.FACTA_WAITING_CUSTOM_INSTALLMENT, {}
         valor = float(numeros[0].replace(",", "."))
         return (
-            f"Ótimo! Parcelas de R$ {valor:.2f}. Qual prazo prefere?\n(12x, 18x, 24x, 36x)"
+            f"Ótimo! Parcelas de {_brl(valor)}. Qual prazo prefere?\n(12x, 18x, 24x, 36x)"
         ), State.FACTA_WAITING_CUSTOM_TERM, {"facta_custom_parcela": valor}
 
     # ── FACTA: WAITING_CUSTOM_TERM ────────────────────────────────────────────
@@ -799,8 +804,8 @@ async def _rodar_simulacao_padrao(user: dict, data: dict) -> tuple:
 
         reply = (
             f"Simulação realizada! 🎉\n\n"
-            f"💰 Valor liberado: R$ {sim['disbursement_amount']:.2f}\n"
-            f"📅 Parcelas: {sim['number_of_installments']}x de R$ {sim['installment_value']:.2f}\n\n"
+            f"💰 Valor liberado: {_brl(sim['disbursement_amount'])}\n"
+            f"📅 Parcelas: {sim['number_of_installments']}x de {_brl(sim['installment_value'])}\n\n"
             f"Podemos prosseguir ou deseja ver outros prazos? 😊"
         )
 
@@ -841,8 +846,8 @@ async def _rodar_simulacao_custom(user: dict, data: dict, installment_value: flo
 
         reply = (
             f"Simulação realizada! 🎉\n\n"
-            f"💰 Valor liberado: R$ {sim['disbursement_amount']:.2f}\n"
-            f"📅 Parcelas: {sim['number_of_installments']}x de R$ {sim['installment_value']:.2f}\n\n"
+            f"💰 Valor liberado: {_brl(sim['disbursement_amount'])}\n"
+            f"📅 Parcelas: {sim['number_of_installments']}x de {_brl(sim['installment_value'])}\n\n"
             f"Podemos prosseguir ou deseja ver outros prazos? 😊"
         )
 
@@ -1109,8 +1114,8 @@ async def _rodar_simulacao_facta(user: dict, data: dict, token: str, matricula: 
 
         reply = (
             f"Encontrei uma opção disponível para você!\n\n"
-            f"Valor liberado: R$ {valor_liberado:.2f}\n"
-            f"Parcelas: {num_parcelas}x de R$ {valor_parcela:.2f}\n\n"
+            f"Valor liberado: {_brl(valor_liberado)}\n"
+            f"Parcelas: {num_parcelas}x de {_brl(valor_parcela)}\n\n"
             f"Podemos prosseguir ou deseja ver outros prazos?"
         )
 
@@ -1172,8 +1177,8 @@ async def _rodar_simulacao_facta_custom(user: dict, data: dict, valor_parcela: f
 
         reply = (
             f"Nova simulação!\n\n"
-            f"Valor liberado: R$ {vl:.2f}\n"
-            f"Parcelas: {prazo}x de R$ {vp:.2f}\n\n"
+            f"Valor liberado: {_brl(vl)}\n"
+            f"Parcelas: {prazo}x de {_brl(vp)}\n\n"
             f"Podemos prosseguir ou deseja ver outros prazos?"
         )
 
