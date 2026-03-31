@@ -35,7 +35,7 @@ openai_client = OpenAI(api_key=config.OPENAI_API_KEY)
 _phone_locks: dict[str, asyncio.Lock] = {}
 
 # Debounce: acumula mensagens rápidas e processa tudo de uma vez
-_DEBOUNCE_SECONDS = 3
+_DEBOUNCE_SECONDS = 11
 _debounce_tasks:    dict[str, asyncio.Task] = {}
 _debounce_texts:    dict[str, list[str]]    = {}
 _debounce_meta:     dict[str, dict]         = {}
