@@ -40,6 +40,42 @@ def _brl(valor: float) -> str:
     return f"R$ {valor:_.2f}".replace("_", "X").replace(".", ",").replace("X", ".")
 
 
+def _detectar_tipo_pix_inteligente(pix_key: str, cpf: str = "", phone: str = "") -> str:
+    """Detecta tipo da chave PIX cruzando com CPF e telefone do cliente.
+    Retorna: '1'=CPF, '2'=Telefone, '3'=Email, '4'=Aleatória
+    """
+    if "@" in pix_key:
+        return "3"
+
+    digits = re.sub(r"\D", "", pix_key)
+    cpf_digits = re.sub(r"\D", "", cpf or "")
+    phone_digits = re.sub(r"\D", "", phone or "")
+    # Remove DDI 55 do telefone salvo para comparar só DDD+número
+    if phone_digits.startswith("55") and len(phone_digits) > 11:
+        phone_digits = phone_digits[2:]
+
+    # Correspondência exata com CPF salvo
+    if cpf_digits and digits == cpf_digits:
+        return "1"
+
+    # Correspondência com telefone salvo (com ou sem 9 na frente, com ou sem DDD)
+    if phone_digits and len(digits) >= 8:
+        # Compara sufixos: últimos 8 dígitos
+        if digits[-8:] == phone_digits[-8:]:
+            return "2"
+
+    # Sem correspondência: usa heurística por tamanho
+    if len(digits) == 11:
+        # 11 dígitos: se começa com 0 a 9 e parece celular (terceiro dígito = 9), é telefone
+        if len(digits) == 11 and digits[2] == "9":
+            return "2"
+        return "1"  # assume CPF
+    if len(digits) >= 10:
+        return "2"  # 10 dígitos = telefone sem o nono dígito
+
+    return "4"  # chave aleatória
+
+
 async def _transcrever_audio(media_url: str) -> str:
     """Baixa áudio do Storage e transcreve via Whisper. Retorna o texto."""
     async with httpx.AsyncClient(timeout=60) as client:
@@ -946,7 +982,11 @@ async def _gerar_proposta(user: dict, data: dict) -> tuple:
             phone_number = "9" + phone_number
 
         pix_key = data.get("pix_key", "")
-        pix_key_type = _detectar_tipo_pix(pix_key)
+        pix_key_type = _detectar_tipo_pix_inteligente(
+            pix_key,
+            cpf=user.get("cpf") or data.get("cpf", ""),
+            phone=user.get("phone", ""),
+        )
         # Chave PIX telefone → garante formato +55DDDNUMERO
         if pix_key_type == "2":
             digits = re.sub(r"\D", "", pix_key)
@@ -1354,7 +1394,11 @@ async def _gerar_proposta_facta(user: dict, data: dict) -> tuple:
         rg = data.get("rg_number") or (cpf_digits[3:] if len(cpf_digits) >= 8 else cpf_digits)
 
         pix_key = data.get("pix_key", "")
-        tipo_pix = facta_detectar_tipo_pix(pix_key)
+        tipo_pix = _detectar_tipo_pix_inteligente(
+            pix_key,
+            cpf=user.get("cpf") or data.get("cpf", ""),
+            phone=user.get("phone", ""),
+        )
         # Chave PIX telefone → garante formato +55DDDNUMERO
         if tipo_pix == "2":
             digits = re.sub(r"\D", "", pix_key)
