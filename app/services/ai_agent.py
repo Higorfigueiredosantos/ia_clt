@@ -34,6 +34,12 @@ openai_client = OpenAI(api_key=config.OPENAI_API_KEY)
 # Lock por telefone para evitar race condition com mensagens simultâneas
 _phone_locks: dict[str, asyncio.Lock] = {}
 
+# Debounce: acumula mensagens rápidas e processa tudo de uma vez
+_DEBOUNCE_SECONDS = 8
+_debounce_tasks:    dict[str, asyncio.Task] = {}
+_debounce_texts:    dict[str, list[str]]    = {}
+_debounce_meta:     dict[str, dict]         = {}
+
 
 def _brl(valor: float) -> str:
     """Formata valor monetário no padrão brasileiro: R$ 1.153,84"""
@@ -226,8 +232,8 @@ async def handle_message(phone: str, name: str, text: str, message_id: str,
                          crm_conversation_id: str = "", crm_channel_id: str = "",
                          crm_contact_id: str = "",
                          media_url: str = "", media_type: str = ""):
-    """Ponto de entrada principal para processar mensagem do WhatsApp."""
-    # Converte áudio/imagem em texto antes de entrar no lock
+    """Ponto de entrada principal. Transcreve mídia e aplica debounce antes de processar."""
+    # Converte áudio/imagem em texto imediatamente (antes do debounce)
     if media_type == "audio" and media_url:
         try:
             text = await _transcrever_audio(media_url)
@@ -239,21 +245,56 @@ async def handle_message(phone: str, name: str, text: str, message_id: str,
         try:
             descricao = await _descrever_imagem(media_url)
             print(f"[handle] Imagem descrita: {descricao[:80]!r}", flush=True)
-            # Se havia caption, combina; senão usa só a descrição
             text = f"{text} {descricao}".strip() if text and text not in ("📷 Imagem",) else descricao
         except Exception as e:
             print(f"[handle] Erro ao descrever imagem: {e}", flush=True)
             text = text or ""
 
     if not text:
-        print(f"[handle] Mensagem sem conteúdo após processamento de mídia, ignorando", flush=True)
+        print(f"[handle] Mensagem sem conteúdo, ignorando", flush=True)
         return
+
+    # Acumula texto no buffer de debounce
+    if phone not in _debounce_texts:
+        _debounce_texts[phone] = []
+    _debounce_texts[phone].append(text)
+
+    # Sempre atualiza o meta com os dados mais recentes
+    _debounce_meta[phone] = {
+        "name": name,
+        "message_id": message_id,
+        "crm_conversation_id": crm_conversation_id,
+        "crm_channel_id": crm_channel_id,
+        "crm_contact_id": crm_contact_id,
+    }
+
+    # Cancela timer anterior e reinicia
+    task = _debounce_tasks.get(phone)
+    if task and not task.done():
+        task.cancel()
+    _debounce_tasks[phone] = asyncio.create_task(_debounce_flush(phone))
+    print(f"[debounce] Timer reiniciado para {phone} ({len(_debounce_texts[phone])} msg(s) acumulada(s))", flush=True)
+
+
+async def _debounce_flush(phone: str):
+    """Aguarda o debounce e processa todas as mensagens acumuladas de uma vez."""
+    await asyncio.sleep(_DEBOUNCE_SECONDS)
+
+    texts = _debounce_texts.pop(phone, [])
+    meta  = _debounce_meta.pop(phone, {})
+    if not texts or not meta:
+        return
+
+    combined = "\n".join(texts)
+    print(f"[debounce] Processando {len(texts)} msg(s) para {phone}: {combined[:60]!r}", flush=True)
 
     if phone not in _phone_locks:
         _phone_locks[phone] = asyncio.Lock()
     async with _phone_locks[phone]:
-        await _handle_message_locked(phone, name, text, message_id,
-                                     crm_conversation_id, crm_channel_id, crm_contact_id)
+        await _handle_message_locked(
+            phone, meta["name"], combined, meta["message_id"],
+            meta["crm_conversation_id"], meta["crm_channel_id"], meta["crm_contact_id"],
+        )
 
 
 async def _handle_message_locked(phone: str, name: str, text: str, message_id: str,
