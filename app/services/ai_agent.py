@@ -212,13 +212,21 @@ GREETING_MESSAGE = (
 )
 
 
+def _extrair_cpf(text: str) -> str:
+    """Extrai sequência de exatamente 11 dígitos consecutivos do texto (CPF)."""
+    # Aceita formatos: 12345678901, 123.456.789-01, 123 456 789 01
+    m = re.search(r'\b(\d{3})[.\s-]?(\d{3})[.\s-]?(\d{3})[.\s-]?(\d{2})\b', text)
+    if m:
+        return "".join(m.groups())
+    return ""
+
+
 def _vai_rodar_simulacao(state: State, data: dict, text: str, user: dict) -> bool:
     """Retorna True se a mensagem vai disparar uma simulação (operação lenta)."""
     if state == State.RUNNING_SIMULATION:
         return True
     if state == State.WAITING_CPF:
-        cpf = re.sub(r"\D", "", text)
-        return len(cpf) == 11
+        return len(_extrair_cpf(text)) == 11
     if state == State.WAITING_SIMULATION_CONFIRM:
         return False  # sempre vai pedir CPF antes de simular
     if state == State.FACTA_WAITING_CONSENT:
@@ -508,7 +516,7 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
 
     # ── WAITING_CPF ──────────────────────────────────────────────────────────
     if state == State.WAITING_CPF:
-        cpf = re.sub(r"\D", "", text)
+        cpf = _extrair_cpf(text)
         if len(cpf) == 11:
             print(f"[handle] WAITING_CPF phone={user.get('phone')} user_id={user['id']} cpf_novo={cpf}", flush=True)
             update_user(user["id"], {"cpf": cpf})
