@@ -45,14 +45,18 @@ async def _process_webhook(body: dict):
             print(f"[webhook] automation_active=false, ignorando contato {body.get('contact_phone')}", flush=True)
             return
 
-        # Só processa mensagens de texto
         msg = body.get("message", {})
-        if msg.get("type") != "text":
-            print(f"[webhook] ignorando tipo={msg.get('type')}", flush=True)
+        msg_type = msg.get("type", "text")
+
+        # Tipos suportados: text, audio, image
+        if msg_type not in ("text", "audio", "image"):
+            print(f"[webhook] ignorando tipo={msg_type}", flush=True)
             return
 
         message_id = msg.get("whatsapp_message_id", "") or body.get("conversation_id", "")
         text = msg.get("content", "").strip()
+        media_url = msg.get("media_url", "")
+        media_type = msg.get("media_type", "")
         phone = body.get("contact_phone", "")
         name = body.get("contact_name", "")
         conversation_id = body.get("conversation_id", "")
@@ -62,7 +66,10 @@ async def _process_webhook(body: dict):
             body.get("contact", {}).get("id", "") or ""
         )
 
-        if not text or not phone:
+        if not phone:
+            return
+        # Mensagem de texto vazia e sem mídia → ignora
+        if not text and not media_url:
             return
 
         print(f"[webhook] msg_id={message_id} dup={message_id in _processed_ids}", flush=True)
@@ -75,13 +82,14 @@ async def _process_webhook(body: dict):
         if len(_processed_ids) > 1000:
             _processed_ids.clear()
 
-        print(f"[webhook] chamando handle_message phone={phone} text={text[:30]!r}", flush=True)
+        print(f"[webhook] chamando handle_message phone={phone} type={msg_type} text={text[:30]!r}", flush=True)
 
-        # Passa conversation_id, channel_id e contact_id para uso no envio e kanban
         await handle_message(phone, name, text, message_id,
                              crm_conversation_id=conversation_id,
                              crm_channel_id=channel_id,
-                             crm_contact_id=contact_id)
+                             crm_contact_id=contact_id,
+                             media_url=media_url,
+                             media_type=media_type)
         print(f"[webhook] handle_message concluído", flush=True)
 
     except Exception as e:

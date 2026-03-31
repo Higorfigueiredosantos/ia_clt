@@ -1,5 +1,7 @@
 import re
 import asyncio
+import io
+import httpx
 from datetime import datetime, timezone, timedelta
 from openai import OpenAI
 from tools.crm.kanban import atualizar_kanban
@@ -36,6 +38,50 @@ _phone_locks: dict[str, asyncio.Lock] = {}
 def _brl(valor: float) -> str:
     """Formata valor monetário no padrão brasileiro: R$ 1.153,84"""
     return f"R$ {valor:_.2f}".replace("_", "X").replace(".", ",").replace("X", ".")
+
+
+async def _transcrever_audio(media_url: str) -> str:
+    """Baixa áudio do Storage e transcreve via Whisper. Retorna o texto."""
+    async with httpx.AsyncClient(timeout=60) as client:
+        resp = await client.get(media_url)
+        resp.raise_for_status()
+        audio_bytes = resp.content
+    arquivo = io.BytesIO(audio_bytes)
+    arquivo.name = "audio.ogg"
+    transcricao = await asyncio.to_thread(
+        lambda: openai_client.audio.transcriptions.create(
+            model="whisper-1",
+            file=arquivo,
+            language="pt",
+        )
+    )
+    return transcricao.text.strip()
+
+
+async def _descrever_imagem(media_url: str) -> str:
+    """Envia imagem para GPT-4o Vision e retorna descrição/conteúdo relevante."""
+    resposta = await asyncio.to_thread(
+        lambda: openai_client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": (
+                            "Você é um assistente de crédito CLT. O cliente enviou esta imagem. "
+                            "Descreva de forma objetiva o que está na imagem — se for um documento "
+                            "(RG, CPF, comprovante), extraia os dados visíveis. "
+                            "Se for outra coisa, descreva resumidamente."
+                        ),
+                    },
+                    {"type": "image_url", "image_url": {"url": media_url}},
+                ],
+            }],
+            max_tokens=500,
+        )
+    )
+    return resposta.choices[0].message.content.strip()
 
 # Mapeamento de novo estado → estágio no Kanban do CRM
 _KANBAN_STAGES: dict[str, str] = {
@@ -129,8 +175,31 @@ def _vai_rodar_simulacao(state: State, data: dict, text: str, user: dict) -> boo
 
 async def handle_message(phone: str, name: str, text: str, message_id: str,
                          crm_conversation_id: str = "", crm_channel_id: str = "",
-                         crm_contact_id: str = ""):
+                         crm_contact_id: str = "",
+                         media_url: str = "", media_type: str = ""):
     """Ponto de entrada principal para processar mensagem do WhatsApp."""
+    # Converte áudio/imagem em texto antes de entrar no lock
+    if media_type == "audio" and media_url:
+        try:
+            text = await _transcrever_audio(media_url)
+            print(f"[handle] Áudio transcrito: {text[:80]!r}", flush=True)
+        except Exception as e:
+            print(f"[handle] Erro ao transcrever áudio: {e}", flush=True)
+            text = ""
+    elif media_type == "image" and media_url:
+        try:
+            descricao = await _descrever_imagem(media_url)
+            print(f"[handle] Imagem descrita: {descricao[:80]!r}", flush=True)
+            # Se havia caption, combina; senão usa só a descrição
+            text = f"{text} {descricao}".strip() if text and text not in ("📷 Imagem",) else descricao
+        except Exception as e:
+            print(f"[handle] Erro ao descrever imagem: {e}", flush=True)
+            text = text or ""
+
+    if not text:
+        print(f"[handle] Mensagem sem conteúdo após processamento de mídia, ignorando", flush=True)
+        return
+
     if phone not in _phone_locks:
         _phone_locks[phone] = asyncio.Lock()
     async with _phone_locks[phone]:
