@@ -9,7 +9,7 @@ _cache = {"token": None, "expires_at": 0}
 
 
 def get_token() -> str:
-    """Retorna token OAuth V8 Sistema com cache de 55 minutos."""
+    """Retorna token OAuth V8 Sistema com cache de 15 minutos."""
     if _cache["token"] and time.time() < _cache["expires_at"]:
         return _cache["token"]
 
@@ -27,6 +27,6 @@ def get_token() -> str:
 
     token = response.json()["access_token"]
     _cache["token"] = token
-    _cache["expires_at"] = time.time() + 55 * 60  # 55 minutos
+    _cache["expires_at"] = time.time() + 15 * 60  # 15 minutos
 
     return token
