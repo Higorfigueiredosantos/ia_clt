@@ -947,6 +947,12 @@ async def _gerar_proposta(user: dict, data: dict) -> tuple:
 
         pix_key = data.get("pix_key", "")
         pix_key_type = _detectar_tipo_pix(pix_key)
+        # Chave PIX telefone → garante formato +55DDDNUMERO
+        if pix_key_type == "2":
+            digits = re.sub(r"\D", "", pix_key)
+            if not digits.startswith("55"):
+                digits = "55" + digits
+            pix_key = "+" + digits
 
         birth_date = str(user.get("birth_date") or data.get("birth_date", ""))[:10]
         gender = user.get("gender") or data.get("gender", "male")
@@ -1349,6 +1355,12 @@ async def _gerar_proposta_facta(user: dict, data: dict) -> tuple:
 
         pix_key = data.get("pix_key", "")
         tipo_pix = facta_detectar_tipo_pix(pix_key)
+        # Chave PIX telefone → garante formato +55DDDNUMERO
+        if tipo_pix == "2":
+            digits = re.sub(r"\D", "", pix_key)
+            if not digits.startswith("55"):
+                digits = "55" + digits
+            pix_key = "+" + digits
 
         # Etapa 2: dados pessoais
         resultado_pessoal = await asyncio.to_thread(
