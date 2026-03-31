@@ -174,6 +174,12 @@ async def _handle_message_locked(phone: str, name: str, text: str, message_id: s
                                     crm_channel_id=crm_channel_id)
 
         reply, new_state, data_update = await _process(state, data, text, user, history, conv["id"])
+
+        # reply=None significa mensagem enfileirada que deve ser silenciosamente ignorada
+        if reply is None:
+            print(f"[ai_agent] IGNORANDO mensagem enfileirada phone={phone} state={state.value}", flush=True)
+            return
+
         reply_preview = reply[:60].encode("ascii", "replace").decode("ascii")
         print(f"[ai_agent] state={state.value} -> {new_state.value} reply={reply_preview!r}", flush=True)
 
@@ -357,9 +363,26 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
     if state == State.CONFIRM_SIMULATION:
         t = text.lower().strip()
         margem = data.get("margem_disponivel", 0)
+
+        # Detecta mensagem enfileirada: se o usuário enviou antes da simulação chegar
+        # (timestamp da msg do usuário < timestamp da última msg do assistente no histórico)
+        _ultima_msg_assistente = next(
+            (m for m in reversed(history) if m.get("role") == "assistant"), None
+        )
+        _ultima_msg_usuario = next(
+            (m for m in reversed(history) if m.get("role") == "user"), None
+        )
+        if _ultima_msg_assistente and _ultima_msg_usuario:
+            from app.services.followup import _parse_dt as _pdt
+            _ts_user = _pdt(_ultima_msg_usuario.get("created_at", ""))
+            _ts_bot  = _pdt(_ultima_msg_assistente.get("created_at", ""))
+            if _ts_user < _ts_bot:
+                # Mensagem chegou antes da simulação ser enviada (era resposta ao "um instante")
+                return None, State.CONFIRM_SIMULATION, {}
+
         # Redireciona para outra simulação se pedir outro prazo/parcela OU reclamar que está alto/caro
         quer_outros = bool(re.search(r"(outr[ao]|prazo|diferente|trocar|mudar|alt[ao]|car[ao]|muito|elevad|menor|reduz|abaixa|parcela|valor menor|ver outr|simul|queria ver|quero ver)", t))
-        quer_prosseguir = bool(re.search(r"\b(sim|confirmo|prosseguir|aceito|vamos|quero)\b", t)) and "?" not in text
+        quer_prosseguir = bool(re.search(r"\b(sim|confirmo|prosseguir|aceito|vamos|quero|ok|okay)\b", t)) and "?" not in text
         if quer_outros:
             return (
                 f"Claro! Qual valor de parcela deseja que simule para você?\n"
@@ -370,7 +393,7 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
                                          "address_neighborhood","address_city","address_state",
                                          "rg_number","rg_date","pix_key","marital_status"]}
             return "Ótimo! Para finalizar a proposta, preciso do seu endereço. Qual o CEP?", State.WAITING_ADDRESS_CEP, limpar
-        # Pergunta ou comentário → responde e retoma
+        # Pergunta ou objeção → responde via GPT
         reply = await asyncio.to_thread(_ask_gpt, state, data, user, history,
             "O cliente fez uma pergunta ou objeção. Responda EXATAMENTE o que ele perguntou usando o FAQ — "
             "ex: se perguntou sobre juros, informe a taxa; se reclamou do juros alto, explique que 6,99% a.m. é uma das menores do mercado e sugira simular outro valor de parcela. "
@@ -499,8 +522,23 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
     # ── FACTA: CONFIRM_SIMULATION ─────────────────────────────────────────────
     if state == State.FACTA_CONFIRM_SIMULATION:
         t = text.lower().strip()
+
+        # Detecta mensagem enfileirada (enviada antes da simulação chegar)
+        _ultima_msg_assistente = next(
+            (m for m in reversed(history) if m.get("role") == "assistant"), None
+        )
+        _ultima_msg_usuario = next(
+            (m for m in reversed(history) if m.get("role") == "user"), None
+        )
+        if _ultima_msg_assistente and _ultima_msg_usuario:
+            from app.services.followup import _parse_dt as _pdt
+            _ts_user = _pdt(_ultima_msg_usuario.get("created_at", ""))
+            _ts_bot  = _pdt(_ultima_msg_assistente.get("created_at", ""))
+            if _ts_user < _ts_bot:
+                return None, State.FACTA_CONFIRM_SIMULATION, {}
+
         quer_outros = bool(re.search(r"\b(outro|outros|prazo|prazos|diferente|trocar|mudar|alta|alto|caro|muito|elevad|menor|reduz|abaixa|parcela|parcelas|valor menor|quero ver|ver outr|simul)\b", t))
-        quer_prosseguir = bool(re.search(r"\b(sim|confirmo|prosseguir|aceito|vamos|quero)\b", t)) and "?" not in text
+        quer_prosseguir = bool(re.search(r"\b(sim|confirmo|prosseguir|aceito|vamos|quero|ok|okay)\b", t)) and "?" not in text
         if quer_outros:
             margem = float(data.get("facta_margem") or 0)
             limite_txt = f"O valor máximo disponível é R$ {margem:.2f}" if margem > 0 else "Informe o valor desejado"
