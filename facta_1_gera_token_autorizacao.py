@@ -3,8 +3,8 @@ import requests
 url = "https://webservice.facta.com.br/gera-token"
 
 headers = {
-    "Authorization": "Basic OTI0ODA6YzZmeHIydmR3NWc3d2dvOWNpeTY=",
-    "Cookie": "9690genf5s8v50p6r9k7der5vd"
+    "Authorization": "Basic OTkwMDY6bjAzeGRqeW9hZXkzOG84bTB0aWE=",
+    "Cookie": "sr1dnl931afs4koj1j417bprvn"
 }
 
 response = requests.get(url, headers=headers)
