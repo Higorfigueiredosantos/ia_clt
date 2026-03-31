@@ -165,7 +165,20 @@ def _calcular_horario_agendamento(text: str) -> str:
     agora_br = datetime.now(_BR_TZ)
     t = text.lower()
 
-    # Tenta extrair hora específica: "15", "15:30", "15h", "15h30"
+    # 1º: tempo relativo — "daqui X minutos", "em X minutos", "X horas"
+    m_min = re.search(r'(?:daqui|em|mais)?\s*(\d+)\s*min(?:uto)?s?', t)
+    if m_min:
+        agendado = agora_br + timedelta(minutes=int(m_min.group(1)))
+        agendado = agendado.replace(second=0, microsecond=0)
+        return agendado.isoformat()
+
+    m_hr = re.search(r'(?:daqui|em|mais)?\s*(\d+)\s*h(?:ora)?s?', t)
+    if m_hr:
+        agendado = agora_br + timedelta(hours=int(m_hr.group(1)))
+        agendado = agendado.replace(second=0, microsecond=0)
+        return agendado.isoformat()
+
+    # 2º: horário fixo — "15:30", "15h30", "15h", "às 15"
     m = re.search(r'\b(\d{1,2})(?:[:h](\d{2}))?\s*h?\b', t)
     if m:
         hora = int(m.group(1))
@@ -176,7 +189,7 @@ def _calcular_horario_agendamento(text: str) -> str:
                 agendado += timedelta(days=1)
             return agendado.isoformat()
 
-    # Sem horário específico — usa regra pelo horário atual
+    # 3º: sem horário específico — usa regra pelo período do dia
     hora_atual = agora_br.hour + agora_br.minute / 60
     if 6 <= hora_atual < 11.5:
         agendado = agora_br.replace(hour=12, minute=0, second=0, microsecond=0)
