@@ -82,6 +82,59 @@ _MENSAGENS = {
     ),
 }
 
+# Mensagens do 2º follow-up (diferentes das primeiras)
+_MENSAGENS_2 = {
+    "WAITING_SIMULATION_CONFIRM": (
+        "Oi! Passando para ver se você teve a chance de pensar na simulação do seu crédito CLT. "
+        "Quando quiser, é só me chamar! 😊"
+    ),
+    "WAITING_CPF": (
+        "Oi! Ainda não recebi seu CPF. Assim que puder me enviar, dou continuidade à simulação!"
+    ),
+    "CONFIRM_SIMULATION": (
+        "Oi! Sua simulação continua disponível aqui. "
+        "Basta me confirmar para prosseguirmos com a proposta! 😊"
+    ),
+    "WAITING_CUSTOM_INSTALLMENT": (
+        "Oi! Me lembro que você estava escolhendo o valor da parcela. "
+        "Qual ficaria mais confortável para você?"
+    ),
+    "WAITING_CUSTOM_TERM": (
+        "Oi! Ainda aguardo a escolha do prazo. Temos as opções: 8x, 10x, 12x, 18x, 24x ou 36x. Qual prefere?"
+    ),
+    "WAITING_ADDRESS_CEP": (
+        "Oi! Para finalizarmos sua proposta só falta o CEP. Pode me enviar?"
+    ),
+    "WAITING_PIX_KEY": (
+        "Oi! Estamos quase lá! Só falta sua chave PIX para concluir a proposta. 😊"
+    ),
+    "FACTA_WAITING_CONSENT": (
+        "Oi! Conseguiu acessar o link de autorização? Me avisa aqui para darmos continuidade!"
+    ),
+    "FACTA_WAITING_ALT_PHONE": (
+        "Oi! Ainda preciso de um número alternativo de WhatsApp para enviar o link. Tem outro disponível?"
+    ),
+    "FACTA_CONFIRM_SIMULATION": (
+        "Oi! Sua proposta ainda está disponível. Quando quiser prosseguir é só me falar! 😊"
+    ),
+    "FACTA_WAITING_CUSTOM_INSTALLMENT": (
+        "Oi! Ainda aguardo o valor de parcela de sua preferência. Qual ficaria bom para você?"
+    ),
+    "FACTA_WAITING_CUSTOM_TERM": (
+        "Oi! Ainda aguardo a escolha do prazo. Temos: 12x, 18x, 24x ou 36x. Qual prefere?"
+    ),
+    "FACTA_WAITING_CEP": (
+        "Oi! Para finalizarmos sua proposta só falta o CEP. Pode me enviar?"
+    ),
+    "FACTA_WAITING_PIX_KEY": (
+        "Oi! Estamos quase lá! Só falta sua chave PIX para concluir. 😊"
+    ),
+    "FACTA_WAITING_PHONE": (
+        "Oi! Ainda aguardo seu número de celular com DDD para prosseguir. "
+        "Pode me enviar no formato (DDD) 9XXXX-XXXX?"
+    ),
+}
+
 
 def _agora() -> datetime:
     return datetime.now(timezone.utc)
@@ -244,7 +297,10 @@ async def verificar_e_enviar_followups():
         if not phone:
             continue
 
-        mensagem = _MENSAGENS.get(state, "")
+        if followup_count == 0:
+            mensagem = _MENSAGENS.get(state, "")
+        else:
+            mensagem = _MENSAGENS_2.get(state, _MENSAGENS.get(state, ""))
         if not mensagem:
             continue
 
