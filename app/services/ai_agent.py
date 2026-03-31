@@ -392,29 +392,25 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             return (
                 f"O valor máximo disponível é R$ {margem:.2f}. Qual valor dentro desse limite deseja simular?"
             ), State.WAITING_CUSTOM_INSTALLMENT, {}
-        installments_options = data.get("installments_options", [])
-        prazos_disponiveis = sorted({int(o["installmentNumbers"]) for o in installments_options})
-        if prazos_disponiveis:
-            opcoes = ", ".join(f"{p}x" for p in prazos_disponiveis)
-            return (
-                f"Ótimo! Parcelas de R$ {valor:.2f}. Qual prazo prefere? 😊\n({opcoes})"
-            ), State.WAITING_CUSTOM_TERM, {"custom_installment_value": valor}
         return (
-            f"Ótimo! Parcelas de R$ {valor:.2f}. Em qual prazo? (6x, 12x, 18x, 24x, 36x)"
+            f"Ótimo! Parcelas de R$ {valor:.2f}. Qual prazo prefere? 😊\n(8x, 10x, 12x, 18x, 24x, 36x)"
         ), State.WAITING_CUSTOM_TERM, {"custom_installment_value": valor}
 
     # ── WAITING_CUSTOM_TERM ───────────────────────────────────────────────────
     if state == State.WAITING_CUSTOM_TERM:
+        _PRAZOS_V8 = {8, 10, 12, 18, 24, 36}
         numeros = re.findall(r"\d+", text)
         if not numeros:
-            installments_options = data.get("installments_options", [])
-            prazos = sorted({int(o["installmentNumbers"]) for o in installments_options})
-            opcoes = ", ".join(f"{p}x" for p in prazos) if prazos else "6x, 12x, 18x, 24x, 36x"
             reply = await asyncio.to_thread(_ask_gpt, state, data, user, history,
-                f"O cliente está escolhendo o prazo. Opções disponíveis: {opcoes}. "
+                "O cliente está escolhendo o prazo. Opções disponíveis: 8x, 10x, 12x, 18x, 24x, 36x. "
                 "Responda a dúvida usando o FAQ e depois pergunte qual prazo prefere.")
             return reply, State.WAITING_CUSTOM_TERM, {}
         num_parcelas = int(numeros[0])
+        if num_parcelas not in _PRAZOS_V8:
+            return (
+                "Esse prazo não está disponível, os possíveis prazos são 8x, 10x, 12x, 18x, 24x, 36x. "
+                "Qual desses melhor te atenderia?"
+            ), State.WAITING_CUSTOM_TERM, {}
         installment_value = float(data.get("custom_installment_value", data.get("margem_disponivel", 0)))
         return await _rodar_simulacao_custom(user, data, installment_value, num_parcelas)
 
@@ -529,24 +525,24 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
                 "O cliente está escolhendo o valor da parcela. Responda a dúvida e peça qual valor de parcela prefere.")
             return reply, State.FACTA_WAITING_CUSTOM_INSTALLMENT, {}
         valor = float(numeros[0].replace(",", "."))
-        simulacoes = data.get("facta_simulacoes", [])
-        prazos = sorted({int(s.get("prazo", 24)) for s in simulacoes})
-        opcoes = ", ".join(f"{p}x" for p in prazos) if prazos else "12x, 18x, 24x"
         return (
-            f"Ótimo! Parcelas de R$ {valor:.2f}. Qual prazo prefere?\n({opcoes})"
+            f"Ótimo! Parcelas de R$ {valor:.2f}. Qual prazo prefere?\n(12x, 18x, 24x, 36x)"
         ), State.FACTA_WAITING_CUSTOM_TERM, {"facta_custom_parcela": valor}
 
     # ── FACTA: WAITING_CUSTOM_TERM ────────────────────────────────────────────
     if state == State.FACTA_WAITING_CUSTOM_TERM:
+        _PRAZOS_FACTA = {12, 18, 24, 36}
         numeros = re.findall(r"\d+", text)
         if not numeros:
-            simulacoes = data.get("facta_simulacoes", [])
-            prazos = sorted({int(s.get("prazo", 24)) for s in simulacoes})
-            opcoes = ", ".join(f"{p}x" for p in prazos) if prazos else "12x, 18x, 24x"
             reply = await asyncio.to_thread(_ask_gpt, state, data, user, history,
-                f"O cliente está escolhendo o prazo. Opções: {opcoes}. Pergunte qual prefere.")
+                "O cliente está escolhendo o prazo. Opções: 12x, 18x, 24x, 36x. Pergunte qual prefere.")
             return reply, State.FACTA_WAITING_CUSTOM_TERM, {}
         num_parcelas = int(numeros[0])
+        if num_parcelas not in _PRAZOS_FACTA:
+            return (
+                "Esse prazo não está disponível, os possíveis prazos são 12x, 18x, 24x, 36x. "
+                "Qual desses melhor te atenderia?"
+            ), State.FACTA_WAITING_CUSTOM_TERM, {}
         valor_parcela = float(data.get("facta_custom_parcela", 0))
         return await _rodar_simulacao_facta_custom(user, data, valor_parcela, num_parcelas)
 
@@ -819,7 +815,9 @@ async def _rodar_simulacao_custom(user: dict, data: dict, installment_value: flo
 
     except Exception as e:
         print(f"[_rodar_simulacao_custom] Erro: {e}")
-        return "Erro ao simular. Tente outro prazo ou valor:", State.WAITING_CUSTOM_INSTALLMENT, {}
+        return (
+            "Esse prazo não está disponível. Por favor, informe outro prazo: 8x, 10x, 12x, 18x, 24x ou 36x."
+        ), State.WAITING_CUSTOM_TERM, {}
 
 
 async def _gerar_proposta(user: dict, data: dict) -> tuple:
@@ -1125,7 +1123,9 @@ async def _rodar_simulacao_facta_custom(user: dict, data: dict, valor_parcela: f
         )
 
         if not simulacoes:
-            return "Não encontrei opções para esse prazo. Tente outro valor ou prazo:", State.FACTA_WAITING_CUSTOM_INSTALLMENT, {}
+            return (
+                "Esse prazo não está disponível. Por favor, informe outro prazo: 12x, 18x, 24x ou 36x."
+            ), State.FACTA_WAITING_CUSTOM_TERM, {}
 
         melhor = simulacoes[0]
         vp = float(melhor.get("parcela") or melhor.get("valorParcela") or valor_parcela)
@@ -1148,7 +1148,9 @@ async def _rodar_simulacao_facta_custom(user: dict, data: dict, valor_parcela: f
 
     except Exception as e:
         print(f"[_rodar_simulacao_facta_custom] Erro: {e}", flush=True)
-        return "Erro ao simular. Tente outro prazo ou valor:", State.FACTA_WAITING_CUSTOM_INSTALLMENT, {}
+        return (
+            "Esse prazo não está disponível. Por favor, informe outro prazo: 12x, 18x, 24x ou 36x."
+        ), State.FACTA_WAITING_CUSTOM_TERM, {}
 
 
 async def _gerar_proposta_facta(user: dict, data: dict) -> tuple:
