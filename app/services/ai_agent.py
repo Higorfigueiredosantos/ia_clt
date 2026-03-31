@@ -274,6 +274,11 @@ def _ask_gpt(state: State, data: dict, user: dict, history: list[dict], context:
 
 async def _process(state: State, data: dict, text: str, user: dict, history: list[dict], conv_id: str = "") -> tuple:
 
+    # ── NORMALIZAÇÃO DE EMOJI ─────────────────────────────────────────────────
+    # 👍 e variantes de tom de pele → "sim"
+    if re.search(r'👍[\U0001F3FB-\U0001F3FF]?', text):
+        text = re.sub(r'👍[\U0001F3FB-\U0001F3FF]?', 'sim', text).strip()
+
     # ── COMANDO DE RESET (para testes) ────────────────────────────────────────
     if text.strip().lower() == "reseti":
         if conv_id:
@@ -354,7 +359,7 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
         margem = data.get("margem_disponivel", 0)
         # Redireciona para outra simulação se pedir outro prazo/parcela OU reclamar que está alto/caro
         quer_outros = bool(re.search(r"(outr[ao]|prazo|diferente|trocar|mudar|alt[ao]|car[ao]|muito|elevad|menor|reduz|abaixa|parcela|valor menor|ver outr|simul|queria ver|quero ver)", t))
-        quer_prosseguir = bool(re.search(r"\b(sim|ok|confirmo|prosseguir|aceito|vamos|quero)\b", t)) and "?" not in text
+        quer_prosseguir = bool(re.search(r"\b(sim|confirmo|prosseguir|aceito|vamos|quero)\b", t)) and "?" not in text
         if quer_outros:
             return (
                 f"Claro! Qual valor de parcela deseja que simule para você?\n"
@@ -499,7 +504,7 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
     if state == State.FACTA_CONFIRM_SIMULATION:
         t = text.lower().strip()
         quer_outros = bool(re.search(r"\b(outro|outros|prazo|prazos|diferente|trocar|mudar|alta|alto|caro|muito|elevad|menor|reduz|abaixa|parcela|parcelas|valor menor|quero ver|ver outr|simul)\b", t))
-        quer_prosseguir = bool(re.search(r"\b(sim|ok|confirmo|prosseguir|aceito|vamos|quero)\b", t)) and "?" not in text
+        quer_prosseguir = bool(re.search(r"\b(sim|confirmo|prosseguir|aceito|vamos|quero)\b", t)) and "?" not in text
         if quer_outros:
             margem = float(data.get("facta_margem") or 0)
             limite_txt = f"O valor máximo disponível é R$ {margem:.2f}" if margem > 0 else "Informe o valor desejado"
