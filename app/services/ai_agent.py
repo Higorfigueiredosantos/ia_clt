@@ -1154,8 +1154,10 @@ def _extrair_dados_auth(auth: dict, user: dict) -> dict:
     # valorBaseMargem = base salarial; valorMargemDisponivel = margem real disponível (parcela máxima)
     renda = _parse_valor(d.get("valorBaseMargem", "0"))
     margem_disponivel = _parse_valor(d.get("valorMargemDisponivel", "0"))
+    elegivel = str(d.get("elegivel", "")).strip().upper()
+    inelegivel = elegivel in ("NÃO", "NAO", "N", "FALSE", "0", "INELEGIVEL", "INELEGÍVEL")
 
-    print(f"[facta] dados_auth: nome={nome} nasc={data_nasc} renda={renda} margem={margem_disponivel} sexo={sexo}", flush=True)
+    print(f"[facta] dados_auth: nome={nome} nasc={data_nasc} renda={renda} margem={margem_disponivel} sexo={sexo} elegivel={elegivel}", flush=True)
     return {
         "nome": nome,
         "data_nasc": data_nasc,
@@ -1163,6 +1165,7 @@ def _extrair_dados_auth(auth: dict, user: dict) -> dict:
         "nome_mae": nome_mae,
         "renda": renda,
         "margem_disponivel": margem_disponivel,
+        "inelegivel": inelegivel,
     }
 
 
@@ -1223,6 +1226,16 @@ async def _iniciar_fluxo_facta(user: dict, data: dict) -> tuple:
 
         # Extrai dados do cliente direto da resposta de autorização
         cd = _extrair_dados_auth(auth, user)
+
+        # Verifica elegibilidade antes de simular
+        if cd.get("inelegivel") or cd.get("margem_disponivel", 0) == 0:
+            print(f"[facta] Cliente inelegível ou margem zero, encerrando fluxo Facta", flush=True)
+            return (
+                "Consultei seu benefício CLT e, infelizmente, não há margem disponível para crédito no momento. "
+                "Isso pode ocorrer por descontos já existentes em folha ou pelo seu vínculo empregatício atual. "
+                "Caso sua situação mude, pode nos chamar novamente! 😊"
+            ), State.GREETING, {}
+
         # Fallback Multicorban se faltar data_nasc ou renda
         cpf = user.get("cpf") or data.get("cpf", "")
         cd = await asyncio.to_thread(_completar_dados_multicorban, cpf, cd)
@@ -1257,6 +1270,16 @@ async def _verificar_consent_e_simular(user: dict, data: dict) -> tuple:
             ), State.FACTA_WAITING_CONSENT, {}
 
         cd = _extrair_dados_auth(auth, user)
+
+        # Verifica elegibilidade antes de simular
+        if cd.get("inelegivel") or cd.get("margem_disponivel", 0) == 0:
+            print(f"[facta] Cliente inelegível ou margem zero, encerrando fluxo Facta", flush=True)
+            return (
+                "Consultei seu benefício CLT e, infelizmente, não há margem disponível para crédito no momento. "
+                "Isso pode ocorrer por descontos já existentes em folha ou pelo seu vínculo empregatício atual. "
+                "Caso sua situação mude, pode nos chamar novamente! 😊"
+            ), State.GREETING, {}
+
         cpf = user.get("cpf") or data.get("cpf", "")
         cd = await asyncio.to_thread(_completar_dados_multicorban, cpf, cd)
         data = {**data, "facta_matriculas": auth.get("matriculas", [])}
