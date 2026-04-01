@@ -464,6 +464,14 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             update_user(user["id"], {"cpf": None, "birth_date": None, "gender": None})
         return "🔄 Conversa reiniciada! Histórico e dados apagados.", State.GREETING, {}
 
+    # ── COMANDO DE TESTE FACTA (para testes internos) ─────────────────────────
+    m_facta = re.match(r'^!facta\s+(\d{11})$', text.strip())
+    if m_facta:
+        cpf_teste = m_facta.group(1)
+        update_user(user["id"], {"cpf": cpf_teste})
+        user["cpf"] = cpf_teste
+        return await _iniciar_fluxo_facta(user, {**data, "cpf": cpf_teste})
+
     # ── DETECÇÃO DE OCUPADO (qualquer estado, exceto os bloqueados) ───────────
     if state not in _ESTADOS_SEM_AGENDAMENTO and _detectar_ocupado(text):
         return (
