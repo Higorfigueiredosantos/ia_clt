@@ -717,19 +717,10 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             if _ts_user < _ts_bot:
                 return None, State.FACTA_CONFIRM_SIMULATION, {}
 
-        quer_outro_prazo = bool(re.search(r"\b(prazo|prazos|meses?|parcelas?)\b", t)) and not re.search(r"\b(valor|parcela de|quanto|reais?|r\$)\b", t)
-        quer_outra_parcela = bool(re.search(r"\b(alto|caro|muito|elevad|menor|reduz|abaixa|valor menor|parcela menor|valor de parcela|outro valor)\b", t))
-        quer_outros = bool(re.search(r"\b(outro|outros|diferente|trocar|mudar|ver outr|simul|queria ver|quero ver)\b", t))
+        quer_outros = bool(re.search(r"\b(outro|outros|prazo|prazos|diferente|trocar|mudar|alta|alto|caro|muito|elevad|menor|reduz|abaixa|parcela|parcelas|valor menor|quero ver|ver outr|simul|queria ver)\b", t))
         quer_prosseguir = bool(re.search(r"\b(sim|confirmo|prosseguir|aceito|vamos|quero|ok|okay)\b", t)) and "?" not in text
 
-        if quer_outro_prazo and not quer_outra_parcela:
-            # Cliente quer especificamente outro prazo → pula direto para escolha de prazo
-            valor_parcela_atual = float(data.get("facta_sim_selecionada", {}).get("parcela") or data.get("facta_sim_selecionada", {}).get("valorParcela") or 0)
-            if valor_parcela_atual > 0:
-                return (
-                    f"Claro! Qual prazo prefere? (12x, 18x, 24x ou 36x)"
-                ), State.FACTA_WAITING_CUSTOM_TERM, {"custom_installment_value": valor_parcela_atual}
-        if quer_outra_parcela or quer_outros:
+        if quer_outros:
             margem = float(data.get("facta_margem") or 0)
             limite_txt = f"O valor máximo disponível é {_brl(margem)}" if margem > 0 else "Informe o valor desejado"
             return (
