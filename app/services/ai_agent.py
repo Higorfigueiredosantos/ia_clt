@@ -21,7 +21,7 @@ from tools.v8.proposta import gerar_proposta
 from tools.facta.auth import get_facta_token
 from tools.facta.dados_cliente import buscar_dados_cliente_facta
 from tools.facta.consulta import verificar_autorizacao, enviar_termo
-from tools.facta.simulacao import buscar_simulacoes, gravar_simulacao
+from tools.facta.simulacao import buscar_simulacoes, gravar_simulacao, MatriculaRequeridaError
 from tools.facta.proposta import (
     buscar_codigo_cidade,
     detectar_tipo_pix as facta_detectar_tipo_pix,
@@ -1271,9 +1271,27 @@ async def _rodar_simulacao_facta(user: dict, data: dict, token: str, matricula: 
 
         # Usa margem_disponivel como valor_parcela para respeitar o limite real do cliente
         valor_parcela_sim = margem if margem > 0 else None
-        simulacoes = await asyncio.to_thread(
-            buscar_simulacoes, token, cpf, data_nasc, renda, 24, valor_parcela_sim
-        )
+
+        # Tenta simular — se a Facta exigir matrícula, tenta cada opção automaticamente
+        simulacoes = []
+        try:
+            simulacoes = await asyncio.to_thread(
+                buscar_simulacoes, token, cpf, data_nasc, renda, 24, valor_parcela_sim
+            )
+        except MatriculaRequeridaError as e:
+            print(f"[facta] Matrícula requerida, tentando: {e.matriculas}", flush=True)
+            for mat in e.matriculas:
+                try:
+                    simulacoes = await asyncio.to_thread(
+                        buscar_simulacoes, token, cpf, data_nasc, renda, 24, valor_parcela_sim, mat
+                    )
+                    if simulacoes:
+                        matricula = mat  # usa a matrícula que funcionou
+                        print(f"[facta] Matrícula {mat} funcionou", flush=True)
+                        break
+                except Exception as e2:
+                    print(f"[facta] Matrícula {mat} falhou: {e2}", flush=True)
+
         print(f"[facta] {len(simulacoes)} simulacoes encontradas", flush=True)
 
         if not simulacoes:
