@@ -1216,6 +1216,8 @@ async def _iniciar_fluxo_facta(user: dict, data: dict) -> tuple:
         # Fallback Multicorban se faltar data_nasc ou renda
         cpf = user.get("cpf") or data.get("cpf", "")
         cd = await asyncio.to_thread(_completar_dados_multicorban, cpf, cd)
+        # Salva todas as matrículas disponíveis no data para uso na simulação
+        data = {**data, "facta_matriculas": auth.get("matriculas", [])}
         return await _rodar_simulacao_facta(user, data, token, auth["matricula"], cd)
 
     except Exception as e:
@@ -1247,6 +1249,7 @@ async def _verificar_consent_e_simular(user: dict, data: dict) -> tuple:
         cd = _extrair_dados_auth(auth, user)
         cpf = user.get("cpf") or data.get("cpf", "")
         cd = await asyncio.to_thread(_completar_dados_multicorban, cpf, cd)
+        data = {**data, "facta_matriculas": auth.get("matriculas", [])}
         return await _rodar_simulacao_facta(user, data, token, auth["matricula"], cd)
 
     except Exception as e:
@@ -1272,27 +1275,40 @@ async def _rodar_simulacao_facta(user: dict, data: dict, token: str, matricula: 
         # Usa margem_disponivel como valor_parcela para respeitar o limite real do cliente
         valor_parcela_sim = margem if margem > 0 else None
 
-        # Tenta simular — se a Facta exigir matrícula, tenta cada opção automaticamente
-        simulacoes = []
-        try:
-            simulacoes = await asyncio.to_thread(
-                buscar_simulacoes, token, cpf, data_nasc, renda, 24, valor_parcela_sim
-            )
-        except MatriculaRequeridaError as e:
-            print(f"[facta] Matrícula requerida, tentando: {e.matriculas}", flush=True)
-            for mat in e.matriculas:
-                try:
-                    simulacoes = await asyncio.to_thread(
-                        buscar_simulacoes, token, cpf, data_nasc, renda, 24, valor_parcela_sim, mat
-                    )
-                    if simulacoes:
-                        matricula = mat  # usa a matrícula que funcionou
-                        print(f"[facta] Matrícula {mat} funcionou", flush=True)
-                        break
-                except Exception as e2:
-                    print(f"[facta] Matrícula {mat} falhou: {e2}", flush=True)
+        # Monta lista de matrículas para tentar (pode ter múltiplos empregos)
+        matriculas_tentar = data.get("facta_matriculas") or ([matricula] if matricula else [])
 
-        print(f"[facta] {len(simulacoes)} simulacoes encontradas", flush=True)
+        simulacoes = []
+        matricula_usada = matricula
+        for mat in (matriculas_tentar or [None]):
+            try:
+                simulacoes = await asyncio.to_thread(
+                    buscar_simulacoes, token, cpf, data_nasc, renda, 24, valor_parcela_sim, mat
+                )
+                if simulacoes:
+                    matricula_usada = mat
+                    print(f"[facta] Matrícula {mat} funcionou → {len(simulacoes)} simulações", flush=True)
+                    break
+            except MatriculaRequeridaError as e:
+                print(f"[facta] Matrícula requerida pela API, tentando: {e.matriculas}", flush=True)
+                for mat2 in e.matriculas:
+                    try:
+                        simulacoes = await asyncio.to_thread(
+                            buscar_simulacoes, token, cpf, data_nasc, renda, 24, valor_parcela_sim, mat2
+                        )
+                        if simulacoes:
+                            matricula_usada = mat2
+                            print(f"[facta] Matrícula {mat2} funcionou", flush=True)
+                            break
+                    except Exception as e3:
+                        print(f"[facta] Matrícula {mat2} falhou: {e3}", flush=True)
+                if simulacoes:
+                    break
+            except Exception as e2:
+                print(f"[facta] Matrícula {mat} falhou: {e2}", flush=True)
+
+        matricula = matricula_usada or matricula
+        print(f"[facta] {len(simulacoes)} simulacoes encontradas (matricula={matricula})", flush=True)
 
         if not simulacoes:
             return (

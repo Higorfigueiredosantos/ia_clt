@@ -16,10 +16,12 @@ def verificar_autorizacao(token: str, cpf: str) -> dict:
     data = r.json()
     erro = data.get("erro", True)
     dados = data.get("dados_trabalhador", {}).get("dados", [])
-    matricula = dados[0].get("matricula") if dados else None
+    matriculas = [d.get("matricula") for d in dados if d.get("matricula")]
+    matricula = matriculas[0] if matriculas else None
     return {
         "autorizado": not erro and bool(dados),
         "matricula": matricula,
+        "matriculas": matriculas,  # lista completa para tentar em caso de múltiplos empregos
         "raw": data,
     }
 
