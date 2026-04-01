@@ -14,7 +14,7 @@ def get_facta_token() -> str:
     r = requests.get(
         "https://webservice.facta.com.br/gera-token",
         headers={
-            "Authorization": "Basic OTkwMDY6bjAzeGRqeW9hZXkzOG84bTB0aWE=",
+            "Authorization": "Basic OTkwMDY6bW54NXg0a2hwY3c4Y2pjMWppZGY=",
         },
         timeout=10,
     )
