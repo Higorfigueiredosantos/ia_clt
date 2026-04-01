@@ -709,9 +709,19 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             if _ts_user < _ts_bot:
                 return None, State.FACTA_CONFIRM_SIMULATION, {}
 
-        quer_outros = bool(re.search(r"\b(outro|outros|prazo|prazos|diferente|trocar|mudar|alta|alto|caro|muito|elevad|menor|reduz|abaixa|parcela|parcelas|valor menor|quero ver|ver outr|simul)\b", t))
+        quer_outro_prazo = bool(re.search(r"\b(prazo|prazos|meses?|parcelas?)\b", t)) and not re.search(r"\b(valor|parcela de|quanto|reais?|r\$)\b", t)
+        quer_outra_parcela = bool(re.search(r"\b(alto|caro|muito|elevad|menor|reduz|abaixa|valor menor|parcela menor|valor de parcela|outro valor)\b", t))
+        quer_outros = bool(re.search(r"\b(outro|outros|diferente|trocar|mudar|ver outr|simul|queria ver|quero ver)\b", t))
         quer_prosseguir = bool(re.search(r"\b(sim|confirmo|prosseguir|aceito|vamos|quero|ok|okay)\b", t)) and "?" not in text
-        if quer_outros:
+
+        if quer_outro_prazo and not quer_outra_parcela:
+            # Cliente quer especificamente outro prazo → pula direto para escolha de prazo
+            valor_parcela_atual = float(data.get("facta_sim_selecionada", {}).get("parcela") or data.get("facta_sim_selecionada", {}).get("valorParcela") or 0)
+            if valor_parcela_atual > 0:
+                return (
+                    f"Claro! Qual prazo prefere? (12x, 18x, 24x ou 36x)"
+                ), State.FACTA_WAITING_CUSTOM_TERM, {"custom_installment_value": valor_parcela_atual}
+        if quer_outra_parcela or quer_outros:
             margem = float(data.get("facta_margem") or 0)
             limite_txt = f"O valor máximo disponível é {_brl(margem)}" if margem > 0 else "Informe o valor desejado"
             return (
@@ -753,7 +763,7 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
                 "Esse prazo não está disponível, os possíveis prazos são 12x, 18x, 24x, 36x. "
                 "Qual desses melhor te atenderia?"
             ), State.FACTA_WAITING_CUSTOM_TERM, {}
-        valor_parcela = float(data.get("facta_custom_parcela", 0))
+        valor_parcela = float(data.get("facta_custom_parcela") or data.get("custom_installment_value") or 0)
         return await _rodar_simulacao_facta_custom(user, data, valor_parcela, num_parcelas)
 
     # ── FACTA: WAITING_CEP ────────────────────────────────────────────────────
@@ -1371,10 +1381,32 @@ async def _rodar_simulacao_facta_custom(user: dict, data: dict, valor_parcela: f
         cpf = user.get("cpf") or data.get("cpf", "")
         data_nasc = data.get("facta_data_nasc", "")
         renda = float(data.get("facta_renda") or 0.0)
+        matriculas = data.get("facta_matriculas") or ([data.get("facta_matricula")] if data.get("facta_matricula") else [None])
 
-        simulacoes = await asyncio.to_thread(
-            buscar_simulacoes, token, cpf, data_nasc, renda, num_parcelas, valor_parcela
-        )
+        simulacoes = []
+        for mat in matriculas:
+            try:
+                simulacoes = await asyncio.to_thread(
+                    buscar_simulacoes, token, cpf, data_nasc, renda, num_parcelas, valor_parcela, mat
+                )
+                if simulacoes:
+                    print(f"[facta_custom] Matrícula {mat} funcionou", flush=True)
+                    break
+            except MatriculaRequeridaError as e:
+                for mat2 in e.matriculas:
+                    try:
+                        simulacoes = await asyncio.to_thread(
+                            buscar_simulacoes, token, cpf, data_nasc, renda, num_parcelas, valor_parcela, mat2
+                        )
+                        if simulacoes:
+                            print(f"[facta_custom] Matrícula {mat2} funcionou", flush=True)
+                            break
+                    except Exception:
+                        pass
+                if simulacoes:
+                    break
+            except Exception as e2:
+                print(f"[facta_custom] Matrícula {mat} falhou: {e2}", flush=True)
 
         if not simulacoes:
             return (
