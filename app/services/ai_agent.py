@@ -410,6 +410,10 @@ async def _handle_message_locked(phone: str, name: str, text: str, message_id: s
         # Cancela follow-ups agendados quando cliente manda qualquer mensagem
         _cancelar_followups(phone)
 
+        # Remove flag ia_desativada caso IA tenha sido reativada
+        if data.get("ia_desativada"):
+            data.pop("ia_desativada", None)
+
         # Envia feedback imediato antes de operações lentas (simulação ~30-60s)
         if _vai_rodar_simulacao(state, data, text, user):
             await send_text_message(phone, "Certo, um instante que irei simular!",

@@ -255,6 +255,10 @@ async def verificar_e_enviar_followups():
                 print(f"[followup] Erro ao disparar agendamento para {phone}: {e}", flush=True)
             continue
 
+        # IA desativada para esse contato → nunca enviar follow-up
+        if data.get("ia_desativada"):
+            continue
+
         if state in _ESTADOS_IGNORAR:
             continue
         if state not in _MENSAGENS:

@@ -47,6 +47,17 @@ async def _process_webhook(body: dict):
             if _phone:
                 from app.services.ai_agent import _cancelar_followups
                 _cancelar_followups(_phone)
+                # Marca conversa no banco para followup.py não enviar lembretes
+                try:
+                    from app.services.user import get_or_create_user
+                    from app.services.conversation import get_or_create_conversation, update_conversation
+                    _u = get_or_create_user(_phone, "")
+                    _c = get_or_create_conversation(_u["id"])
+                    _d = _c.get("data") or {}
+                    if not _d.get("ia_desativada"):
+                        update_conversation(_c["id"], _c["state"], {**_d, "ia_desativada": True})
+                except Exception as _e:
+                    print(f"[webhook] Erro ao marcar ia_desativada: {_e}", flush=True)
             return
 
         msg = body.get("message", {})
