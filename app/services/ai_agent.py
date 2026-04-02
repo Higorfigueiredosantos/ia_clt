@@ -1185,6 +1185,10 @@ async def _gerar_proposta(user: dict, data: dict) -> tuple:
         _V8_PIX_TYPE = {"1": "cpf", "2": "telefone", "3": "e-mail", "4": "chave aleatória"}
         pix_key_type = _V8_PIX_TYPE.get(pix_key_type_raw, "cpf")
 
+        # Chave PIX CPF → remove máscara (V8 aceita só dígitos)
+        if pix_key_type_raw == "1":
+            pix_key = re.sub(r"\D", "", pix_key)
+
         # Chave PIX telefone → garante formato +55DDDNUMERO
         if pix_key_type_raw == "2":
             digits = re.sub(r"\D", "", pix_key)
