@@ -42,7 +42,11 @@ async def _process_webhook(body: dict):
         # Filtra automação ativa — se false, IA está desligada para esse contato
         automation_active = body.get("automation_active", False)
         if not automation_active:
-            print(f"[webhook] automation_active=false, ignorando contato {body.get('contact_phone')}", flush=True)
+            _phone = body.get("contact_phone", "")
+            print(f"[webhook] automation_active=false, ignorando contato {_phone}", flush=True)
+            if _phone:
+                from app.services.ai_agent import _cancelar_followups
+                _cancelar_followups(_phone)
             return
 
         msg = body.get("message", {})
