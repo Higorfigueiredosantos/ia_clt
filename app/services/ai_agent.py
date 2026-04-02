@@ -1176,13 +1176,17 @@ async def _gerar_proposta(user: dict, data: dict) -> tuple:
             phone_number = "9" + phone_number
 
         pix_key = data.get("pix_key", "")
-        pix_key_type = _detectar_tipo_pix_inteligente(
+        pix_key_type_raw = _detectar_tipo_pix_inteligente(
             pix_key,
             cpf=user.get("cpf") or data.get("cpf", ""),
             phone=user.get("phone", ""),
         )
+        # Converte código numérico (Facta) para o formato texto exigido pela V8
+        _V8_PIX_TYPE = {"1": "cpf", "2": "telefone", "3": "e-mail", "4": "chave aleatória"}
+        pix_key_type = _V8_PIX_TYPE.get(pix_key_type_raw, "cpf")
+
         # Chave PIX telefone → garante formato +55DDDNUMERO
-        if pix_key_type == "2":
+        if pix_key_type_raw == "2":
             digits = re.sub(r"\D", "", pix_key)
             if not digits.startswith("55"):
                 digits = "55" + digits
