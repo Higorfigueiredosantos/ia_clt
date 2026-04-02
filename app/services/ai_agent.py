@@ -40,10 +40,76 @@ _debounce_tasks:    dict[str, asyncio.Task] = {}
 _debounce_texts:    dict[str, list[str]]    = {}
 _debounce_meta:     dict[str, dict]         = {}
 
+# Follow-up pós-proposta
+_followup_tasks: dict[str, list[asyncio.Task]] = {}
+
 
 def _brl(valor: float) -> str:
     """Formata valor monetário no padrão brasileiro: R$ 1.153,84"""
     return f"R$ {valor:_.2f}".replace("_", "X").replace(".", ",").replace("X", ".")
+
+
+async def _desativar_automacao(contact_id: str) -> None:
+    """Desativa a IA via Supabase toggle-automation."""
+    if not contact_id:
+        return
+    try:
+        url = f"{config.SUPABASE_URL}/functions/v1/toggle-automation"
+        async with httpx.AsyncClient() as client:
+            r = await client.post(
+                url,
+                params={"contact_id": contact_id},
+                headers={
+                    "Authorization": f"Bearer {config.SUPABASE_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={"automation_active": False},
+                timeout=10,
+            )
+        print(f"[toggle-automation] contact_id={contact_id} status={r.status_code}", flush=True)
+    except Exception as e:
+        print(f"[toggle-automation] Erro: {e}", flush=True)
+
+
+def _cancelar_followups(phone: str) -> None:
+    """Cancela follow-ups agendados para o telefone."""
+    for task in _followup_tasks.get(phone, []):
+        task.cancel()
+    _followup_tasks[phone] = []
+
+
+async def _followup_worker(phone: str, delay_seconds: int, mensagem: str,
+                            crm_conversation_id: str, crm_channel_id: str,
+                            conv_id: str) -> None:
+    """Espera delay_seconds e envia mensagem se cliente ainda estiver em PROPOSAL_SENT."""
+    try:
+        await asyncio.sleep(delay_seconds)
+        from app.services.conversation import get_or_create_conversation
+        from app.services.user import get_or_create_user
+        # Verifica estado atual via DB
+        user = get_or_create_user(phone, "")
+        conv = get_or_create_conversation(user["id"])
+        if conv.get("state") == State.PROPOSAL_SENT.value:
+            await send_text_message(phone, mensagem,
+                                    crm_conversation_id=crm_conversation_id,
+                                    crm_channel_id=crm_channel_id)
+            print(f"[followup] Enviado para {phone}: {mensagem[:60]!r}", flush=True)
+    except asyncio.CancelledError:
+        pass
+    except Exception as e:
+        print(f"[followup] Erro: {e}", flush=True)
+
+
+def _agendar_followups(phone: str, crm_conversation_id: str,
+                        crm_channel_id: str, conv_id: str) -> None:
+    """Agenda follow-up de 30min e 1h após envio da proposta."""
+    _cancelar_followups(phone)
+    msg1 = "Verifiquei que ainda não finalizou a proposta, está com alguma dificuldade em que possa ajudar?"
+    msg2 = "É só clicar no link da proposta acima e realizar o passo a passo. Após a formalização em até 5 minutos será creditado!"
+    t1 = asyncio.create_task(_followup_worker(phone, 30 * 60, msg1, crm_conversation_id, crm_channel_id, conv_id))
+    t2 = asyncio.create_task(_followup_worker(phone, 60 * 60, msg2, crm_conversation_id, crm_channel_id, conv_id))
+    _followup_tasks[phone] = [t1, t2]
+    print(f"[followup] Agendado 30min e 1h para {phone}", flush=True)
 
 
 def _detectar_tipo_pix_inteligente(pix_key: str, cpf: str = "", phone: str = "") -> str:
@@ -339,6 +405,9 @@ async def _handle_message_locked(phone: str, name: str, text: str, message_id: s
             data["followup_count"] = 0
             data["followup_1_at"] = None
 
+        # Cancela follow-ups agendados quando cliente manda qualquer mensagem
+        _cancelar_followups(phone)
+
         # Envia feedback imediato antes de operações lentas (simulação ~30-60s)
         if _vai_rodar_simulacao(state, data, text, user):
             await send_text_message(phone, "Certo, um instante que irei simular!",
@@ -375,6 +444,15 @@ async def _handle_message_locked(phone: str, name: str, text: str, message_id: s
         await send_text_message(phone, reply,
                                 crm_conversation_id=crm_conversation_id,
                                 crm_channel_id=crm_channel_id)
+
+        # Agenda follow-ups quando a proposta acaba de ser enviada
+        if new_state == State.PROPOSAL_SENT and state != State.PROPOSAL_SENT:
+            _agendar_followups(phone, crm_conversation_id, crm_channel_id, conv["id"])
+
+        # Desativa IA quando cliente confirma que finalizou a proposta
+        if state == State.PROPOSAL_SENT and new_state == State.HUMAN_HANDOFF:
+            await _desativar_automacao(crm_contact_id)
+
         print(f"[handle] FIM OK phone={phone}", flush=True)
 
     except Exception as e:
@@ -797,8 +875,48 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
         merged = {**data, "pix_key": text.strip()}
         return await _gerar_proposta_facta(user, merged)
 
-    # ── PROPOSAL_SENT / HUMAN_HANDOFF ─────────────────────────────────────────
-    if state in (State.PROPOSAL_SENT, State.HUMAN_HANDOFF):
+    # ── PROPOSAL_SENT ─────────────────────────────────────────────────────────
+    if state == State.PROPOSAL_SENT:
+        t_lower = text.lower()
+
+        # Cliente indica que já assinou/finalizou a proposta
+        _RE_CONCLUIU = re.compile(
+            r'\b(finaliz|pronto|pronta|conclu[íi]|j[aá]\s*fiz|assin[eio]|realizei|feito|feita|terminei|terminou|fiz|ok\s*fiz|já\s*assinei)\b',
+            re.I
+        )
+        if _RE_CONCLUIU.search(t_lower):
+            return "Certo, irei verificar. Só um instante! ✅", State.HUMAN_HANDOFF, {}
+
+        # Link não está abrindo
+        _RE_LINK_ERRO = re.compile(
+            r'\b(n[aã]o\s*(abre|abri|abriu|est[aá]\s*abrindo|consigo\s*abrir|consigo\s*acessar)|link\s*(n[aã]o|quebr|inválid|expirou|deu\s*erro)|erro\s*no\s*link|n[aã]o\s*abre)\b',
+            re.I
+        )
+        if _RE_LINK_ERRO.search(t_lower):
+            formalization_url = data.get("formalization_url", "")
+            return (
+                f"Segue o link novamente:\n{formalization_url}\n\n"
+                f"Por favor, feche o navegador do celular completamente e abra novamente — isso resolve na maioria dos casos! 😊"
+            ), State.PROPOSAL_SENT, {}
+
+        # Cliente pergunta sobre validade/expiração
+        _RE_VALIDADE = re.compile(
+            r'\b(valid|expir|venc|prazo|quanto\s*tempo|tem\s*prazo|vai\s*expir)\b',
+            re.I
+        )
+        if _RE_VALIDADE.search(t_lower):
+            return (
+                "O link da proposta tem validade de *10 horas* após o envio. "
+                "Caso expire, é só me chamar que gero um novo link! 😊"
+            ), State.PROPOSAL_SENT, {}
+
+        # Outros casos: GPT
+        reply = await asyncio.to_thread(_ask_gpt, state, data, user, history,
+            "Responda a mensagem do cliente sobre a proposta enviada. Se pedir algo novo, pergunte se quer iniciar uma nova simulação.")
+        return reply, State.PROPOSAL_SENT, {}
+
+    # ── HUMAN_HANDOFF ─────────────────────────────────────────────────────────
+    if state == State.HUMAN_HANDOFF:
         reply = await asyncio.to_thread(_ask_gpt, state, data, user, history,
             "Responda a mensagem do cliente. Se pedir algo novo, pergunte se quer iniciar uma nova simulação.")
         return reply, state, {}
@@ -1106,7 +1224,7 @@ async def _gerar_proposta(user: dict, data: dict) -> tuple:
         reply = (
             f"✅ Proposta gerada com sucesso!\n\n"
             f"Segue o link para assinatura digital:\n{resultado['formalization_url']}\n\n"
-            f"A assinatura é 100% digital e segura — após assinar, o valor cai via PIX. 😊\n\n"
+            f"A assinatura é 100% digital e segura — após assinar, o valor será creditado via PIX. 😊\n\n"
             f"Qualquer dúvida, é só me chamar!"
         )
 
@@ -1356,10 +1474,10 @@ async def _rodar_simulacao_facta(user: dict, data: dict, token: str, matricula: 
         num_parcelas = int(melhor.get("prazo") or 24)
 
         reply = (
-            f"Encontrei uma opção disponível para você!\n\n"
-            f"Valor liberado: {_brl(valor_liberado)}\n"
-            f"Parcelas: {num_parcelas}x de {_brl(valor_parcela)}\n\n"
-            f"Podemos prosseguir ou deseja ver outros prazos?"
+            f"Simulação realizada! 🎉\n\n"
+            f"💰 Valor liberado: *{_brl(valor_liberado)}*\n"
+            f"📅 Parcelas: {num_parcelas}x de {_brl(valor_parcela)}\n\n"
+            f"Podemos prosseguir ou deseja ver outros prazos? 😊"
         )
 
         return reply, State.FACTA_CONFIRM_SIMULATION, {
@@ -1441,10 +1559,10 @@ async def _rodar_simulacao_facta_custom(user: dict, data: dict, valor_parcela: f
         prazo = int(melhor.get("prazo") or num_parcelas)
 
         reply = (
-            f"Nova simulação!\n\n"
-            f"Valor liberado: {_brl(vl)}\n"
-            f"Parcelas: {prazo}x de {_brl(vp)}\n\n"
-            f"Podemos prosseguir ou deseja ver outros prazos?"
+            f"Simulação realizada! 🎉\n\n"
+            f"💰 Valor liberado: *{_brl(vl)}*\n"
+            f"📅 Parcelas: {prazo}x de {_brl(vp)}\n\n"
+            f"Podemos prosseguir ou deseja ver outros prazos? 😊"
         )
 
         return reply, State.FACTA_CONFIRM_SIMULATION, {
@@ -1608,7 +1726,7 @@ async def _gerar_proposta_facta(user: dict, data: dict) -> tuple:
         reply = (
             f"Proposta gerada com sucesso!\n\n"
             f"Segue o link para assinatura digital:\n{link}\n\n"
-            f"A assinatura é 100% digital e segura — após assinar, o valor cai via PIX.\n\n"
+            f"A assinatura é 100% digital e segura — após assinar, o valor será creditado via PIX.\n\n"
             f"Qualquer dúvida, é só me chamar!"
         )
         return reply, State.PROPOSAL_SENT, {"formalization_url": link}
