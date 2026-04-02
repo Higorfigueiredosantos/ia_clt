@@ -92,7 +92,7 @@ async def _process_webhook(body: dict):
                 crm_conversation_id=conversation_id,
                 crm_channel_id=channel_id,
             )
-            await _desativar_automacao(contact_id)
+            await _desativar_automacao(contact_id, phone=phone)
             return
 
         print(f"[webhook] msg_id={message_id} dup={message_id in _processed_ids}", flush=True)

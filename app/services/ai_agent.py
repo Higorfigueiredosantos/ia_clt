@@ -49,8 +49,10 @@ def _brl(valor: float) -> str:
     return f"R$ {valor:_.2f}".replace("_", "X").replace(".", ",").replace("X", ".")
 
 
-async def _desativar_automacao(contact_id: str) -> None:
-    """Desativa a IA via Supabase toggle-automation."""
+async def _desativar_automacao(contact_id: str, phone: str = "") -> None:
+    """Desativa a IA via Supabase toggle-automation e cancela follow-ups pendentes."""
+    if phone:
+        _cancelar_followups(phone)
     if not contact_id:
         return
     try:
@@ -451,7 +453,7 @@ async def _handle_message_locked(phone: str, name: str, text: str, message_id: s
 
         # Desativa IA quando cliente confirma que finalizou a proposta
         if state == State.PROPOSAL_SENT and new_state == State.HUMAN_HANDOFF:
-            await _desativar_automacao(crm_contact_id)
+            await _desativar_automacao(crm_contact_id, phone=phone)
 
         print(f"[handle] FIM OK phone={phone}", flush=True)
 
