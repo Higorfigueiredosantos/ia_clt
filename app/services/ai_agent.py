@@ -410,8 +410,19 @@ async def _handle_message_locked(phone: str, name: str, text: str, message_id: s
         # Cancela follow-ups agendados quando cliente manda qualquer mensagem
         _cancelar_followups(phone)
 
-        # Remove flag ia_desativada caso IA tenha sido reativada
-        if data.get("ia_desativada"):
+        # Detecta opt-out por texto → desativa IA e follow-ups
+        _RE_OPTOUT = re.compile(
+            r'\b(n[aã]o\s*quero|parar?\s*mensagens?|para\s*de\s*mandar|n[aã]o\s*tenho\s*interesse|'
+            r'n[aã]o\s*quero\s*mais|cancela[r]?\s*mensagens?|bloquear?\s*contato|remover?\s*da?\s*lista|'
+            r'n[aã]o\s*me\s*contacte|deixa\s*pra\s*l[aá]|desisti|n[aã]o\s*preciso)\b',
+            re.I
+        )
+        if _RE_OPTOUT.search(text):
+            data["ia_desativada"] = True
+            asyncio.create_task(_desativar_automacao(crm_contact_id, phone=phone))
+
+        # Remove flag ia_desativada caso IA tenha sido reativada (mensagem normal)
+        elif data.get("ia_desativada"):
             data.pop("ia_desativada", None)
 
         # Envia feedback imediato antes de operações lentas (simulação ~30-60s)
