@@ -586,6 +586,9 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
 
     # ── GREETING ──────────────────────────────────────────────────────────────
     if state == State.GREETING:
+        # Botão "Ver detalhes" → pula saudação e vai direto ao CPF
+        if text.strip().lower() == "ver detalhes":
+            return "Para simular, preciso do seu CPF. Pode me informar?", State.WAITING_CPF, {}
         return GREETING_MESSAGE, State.WAITING_SIMULATION_CONFIRM, {}
 
     # ── WAITING_SIMULATION_CONFIRM ────────────────────────────────────────────
