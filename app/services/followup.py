@@ -41,7 +41,7 @@ _MENSAGENS = {
     ),
     "WAITING_CUSTOM_TERM": (
         "Oi! Só falta escolher o prazo para finalizarmos sua simulação. "
-        "Qual prefere: 8x, 10x, 12x, 18x, 24x ou 36x? 😊"
+        "Qual prefere: 12x, 18x, 24x ou 36x? 😊"
     ),
     "WAITING_ADDRESS_CEP": (
         "Para finalizar sua proposta, precisamos do seu CEP. Poderia me informar?"
@@ -101,7 +101,7 @@ _MENSAGENS_2 = {
         "Assim consigo simular certinho para você! 😊"
     ),
     "WAITING_CUSTOM_TERM": (
-        "Oi! Ainda aguardo a escolha do prazo. Temos: 8x, 10x, 12x, 18x, 24x ou 36x. Qual prefere?"
+        "Oi! Ainda aguardo a escolha do prazo. Temos: 12x, 18x, 24x ou 36x. Qual prefere?"
     ),
     "WAITING_ADDRESS_CEP": (
         "Oi! Para finalizarmos sua proposta só falta o CEP. Pode me enviar?"

@@ -809,7 +809,7 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
                 f"O valor máximo disponível é {_brl(margem)}. Qual valor dentro desse limite deseja simular?"
             ), State.WAITING_CUSTOM_INSTALLMENT, {}
         return (
-            f"Ótimo! Parcelas de {_brl(valor)}. Qual prazo prefere? 😊\n(8x, 10x, 12x, 18x, 24x, 36x)"
+            f"Ótimo! Parcelas de {_brl(valor)}. Qual prazo prefere? 😊\n(12x, 18x, 24x, 36x)"
         ), State.WAITING_CUSTOM_TERM, {"custom_installment_value": valor}
 
     # ── WAITING_CUSTOM_TERM ───────────────────────────────────────────────────
@@ -818,13 +818,13 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
         numeros = re.findall(r"\d+", text)
         if not numeros:
             reply = await asyncio.to_thread(_ask_gpt, state, data, user, history,
-                "O cliente está escolhendo o prazo. Opções disponíveis: 8x, 10x, 12x, 18x, 24x, 36x. "
+                "O cliente está escolhendo o prazo. Opções disponíveis: 12x, 18x, 24x, 36x. "
                 "Responda a dúvida usando o FAQ e depois pergunte qual prazo prefere.")
             return reply, State.WAITING_CUSTOM_TERM, {}
         num_parcelas = int(numeros[0])
         if num_parcelas not in _PRAZOS_V8:
             return (
-                "Esse prazo não está disponível, os possíveis prazos são 8x, 10x, 12x, 18x, 24x, 36x. "
+                "Esse prazo não está disponível, os possíveis prazos são 12x, 18x, 24x, 36x. "
                 "Qual desses melhor te atenderia?"
             ), State.WAITING_CUSTOM_TERM, {}
         installment_value = float(data.get("custom_installment_value", data.get("margem_disponivel", 0)))
