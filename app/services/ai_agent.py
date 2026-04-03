@@ -678,8 +678,41 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
                 return None, State.CONFIRM_SIMULATION, {}
 
         # Redireciona para outra simulação se pedir outro prazo/parcela OU reclamar que está alto/caro
+        quer_valor_maior = bool(re.search(
+            r"(tem\s*s[oó]\s*isso|s[oó]\s*isso|tem\s*mais|n[aã]o\s*tem\s*mais|"
+            r"valor\s*maior|mais\s*valor|n[aã]o\s*tem\s*(um\s*)?valor\s*maior|"
+            r"[eé]\s*esse\s*mesmo|tem\s*outro\s*valor|n[aã]o\s*d[aá]\s*mais|"
+            r"algum\s*valor\s*maior|disponivel\s*so\s*isso|so\s*esse\s*valor|"
+            r"n[aã]o\s*tem\s*disponivel|mais\s*nada)", t))
         quer_outros = bool(re.search(r"(outr[ao]|prazo|diferente|trocar|mudar|alt[ao]|car[ao]|muito|elevad|menor|reduz|abaixa|parcela|valor menor|ver outr|simul|queria ver|quero ver)", t))
         quer_prosseguir = bool(re.search(r"\b(sim|confirmo|prosseguir|aceito|vamos|quero|ok|okay)\b", t)) and "?" not in text
+
+        if quer_valor_maior:
+            # Refaz simulação em 36x para mostrar o maior valor possível
+            consult_id = data.get("consult_id", "")
+            installments_options = data.get("installments_options", [])
+            opcao_36 = next((o for o in installments_options if int(o.get("installmentNumbers", 0)) == 36), None)
+            if opcao_36 and consult_id:
+                installment_36 = min(float(opcao_36["maxInstallmentValue"]), margem)
+                sim36 = await asyncio.to_thread(
+                    executar_simulacao, consult_id, config.V8_CONFIG_ID, installment_36, 36
+                )
+                reply36 = (
+                    f"Simulei no prazo máximo de 36x para você! 😊\n\n"
+                    f"💰 Valor liberado: {_brl(sim36['disbursement_amount'])}\n"
+                    f"📅 Parcelas: {sim36['number_of_installments']}x de {_brl(sim36['installment_value'])}\n\n"
+                    f"Podemos prosseguir ou deseja ver outros prazos? 😊"
+                )
+                return reply36, State.CONFIRM_SIMULATION, {
+                    "simulation_id": sim36["simulation_id"],
+                    "num_parcelas": sim36["number_of_installments"],
+                }
+            # Sem opção 36x → vai para customizar
+            return (
+                f"O valor máximo disponível para você é {_brl(margem)} por parcela. "
+                f"Deseja que eu simule com esse valor?"
+            ), State.WAITING_CUSTOM_INSTALLMENT, {}
+
         if quer_outros:
             return (
                 f"Claro! Qual valor de parcela deseja que simule para você?\n"
@@ -834,8 +867,24 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             if _ts_user < _ts_bot:
                 return None, State.FACTA_CONFIRM_SIMULATION, {}
 
+        quer_valor_maior = bool(re.search(
+            r"(tem\s*s[oó]\s*isso|s[oó]\s*isso|tem\s*mais|n[aã]o\s*tem\s*mais|"
+            r"valor\s*maior|mais\s*valor|n[aã]o\s*tem\s*(um\s*)?valor\s*maior|"
+            r"[eé]\s*esse\s*mesmo|tem\s*outro\s*valor|n[aã]o\s*d[aá]\s*mais|"
+            r"algum\s*valor\s*maior|disponivel\s*so\s*isso|so\s*esse\s*valor|"
+            r"n[aã]o\s*tem\s*disponivel|mais\s*nada)", t))
         quer_outros = bool(re.search(r"\b(outro|outros|prazo|prazos|diferente|trocar|mudar|alta|alto|caro|muito|elevad|menor|reduz|abaixa|parcela|parcelas|valor menor|quero ver|ver outr|simul|queria ver)\b", t))
         quer_prosseguir = bool(re.search(r"\b(sim|confirmo|prosseguir|aceito|vamos|quero|ok|okay)\b", t)) and "?" not in text
+
+        if quer_valor_maior:
+            # Refaz simulação Facta em 36x com margem máxima
+            margem_facta = float(data.get("facta_margem") or 0)
+            if margem_facta > 0:
+                return await _rodar_simulacao_facta_custom(user, data, margem_facta, 36)
+            return (
+                f"Infelizmente não há margem maior disponível no momento. "
+                f"Deseja prosseguir com a proposta atual?"
+            ), State.FACTA_CONFIRM_SIMULATION, {}
 
         if quer_outros:
             margem = float(data.get("facta_margem") or 0)
