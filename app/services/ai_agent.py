@@ -620,6 +620,35 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             "scheduled_resume_state": resume_state,
         }
 
+    # ── SAUDAÇÃO EM MEIO AO ATENDIMENTO ──────────────────────────────────────
+    # Se o cliente mandar uma saudação enquanto já está em um estado de espera,
+    # responde com cordialidade e retoma a etapa atual.
+    _RE_SAUDACAO = re.compile(
+        r'^(oi|ol[aá]|e a[ií]|eae|opa|hey|hei|bom\s*dia|boa\s*tarde|boa\s*noite|'
+        r'oi\s*boa\s*tarde|oi\s*bom\s*dia|oi\s*boa\s*noite|tudo\s*bem|tudo\s*bom|'
+        r'como\s*vai|como\s*voc[eê]\s*est[aá])[\?\!\.\,\s]*$',
+        re.I
+    )
+    _RETOMADA = {
+        State.WAITING_CPF:                    "Olá, tudo bem? 😊 Ficou faltando o envio do seu CPF para darmos continuidade. Poderia informar?",
+        State.WAITING_SIMULATION_CONFIRM:     "Olá, tudo bem? 😊 Ainda posso simular seu crédito CLT agora. Quer que eu simule?",
+        State.WAITING_CUSTOM_INSTALLMENT:     "Olá, tudo bem? 😊 Ainda aguardo o valor de parcela que prefere para finalizar sua simulação.",
+        State.WAITING_CUSTOM_TERM:            "Olá, tudo bem? 😊 Ainda aguardo a escolha do prazo: 12x, 18x, 24x ou 36x.",
+        State.WAITING_ADDRESS_CEP:            "Olá, tudo bem? 😊 Ficou faltando o seu CEP para concluirmos a proposta. Pode me informar?",
+        State.WAITING_PIX_KEY:                "Olá, tudo bem? 😊 Só falta sua chave PIX para concluirmos a proposta. Pode me informar?",
+        State.CONFIRM_SIMULATION:             "Olá, tudo bem? 😊 Sua simulação ainda está disponível aqui. Deseja prosseguir com a proposta?",
+        State.FACTA_CONFIRM_SIMULATION:       "Olá, tudo bem? 😊 Sua simulação ainda está disponível aqui. Deseja prosseguir com a proposta?",
+        State.FACTA_WAITING_CONSENT:          "Olá, tudo bem? 😊 Ainda aguardo a autorização pelo link que enviamos. Já conseguiu clicar?",
+        State.FACTA_WAITING_ALT_PHONE:        "Olá, tudo bem? 😊 Ainda aguardo um número de WhatsApp alternativo para enviar o link de autorização.",
+        State.FACTA_WAITING_CUSTOM_INSTALLMENT: "Olá, tudo bem? 😊 Ainda aguardo o valor de parcela que prefere para finalizar sua simulação.",
+        State.FACTA_WAITING_CUSTOM_TERM:      "Olá, tudo bem? 😊 Ainda aguardo a escolha do prazo: 12x, 18x, 24x ou 36x.",
+        State.FACTA_WAITING_CEP:              "Olá, tudo bem? 😊 Ficou faltando o seu CEP para concluirmos a proposta. Pode me informar?",
+        State.FACTA_WAITING_PIX_KEY:          "Olá, tudo bem? 😊 Só falta sua chave PIX para concluirmos a proposta. Pode me informar?",
+        State.FACTA_WAITING_PHONE:            "Olá, tudo bem? 😊 Ainda aguardo um número de celular com DDD para prosseguir.",
+    }
+    if _RE_SAUDACAO.match(text.strip()) and state in _RETOMADA:
+        return _RETOMADA[state], state, {}
+
     # ── GREETING ──────────────────────────────────────────────────────────────
     if state == State.GREETING:
         # Botão "Ver detalhes" → pula saudação e vai direto ao CPF
