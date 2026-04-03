@@ -425,6 +425,25 @@ async def _handle_message_locked(phone: str, name: str, text: str, message_id: s
         elif data.get("ia_desativada"):
             data.pop("ia_desativada", None)
 
+        # Detecta número errado → pede desculpa, encerra e desativa IA
+        _RE_NUMERO_ERRADO = re.compile(
+            r'\b(n[uú]mero\s*errado|engano|n[aã]o\s*[eé]\s*(essa|esta|minha|meu)\s*(pessoa|contato|n[uú]mero)?|'
+            r'n[aã]o\s*conhe[cç]o|quem\s*[eé]\s*(isso|essa|voc[eê])|'
+            r'esse\s*n[uú]mero\s*n[aã]o\s*[eé]|n[aã]o\s*sou\s*eu|'
+            r'acho\s*que\s*[eé]\s*engano|caiu\s*no\s*engano|n[uú]mero\s*trocado)\b',
+            re.I
+        )
+        if _RE_NUMERO_ERRADO.search(text):
+            _msg_encerramento = "Peço desculpas pelo inconveniente! Encerramos por aqui. Tenha um ótimo dia! 😊"
+            save_message(conv["id"], "assistant", _msg_encerramento)
+            update_conversation(conv["id"], State.HUMAN_HANDOFF.value, {**data, "ia_desativada": True})
+            await send_text_message(phone, _msg_encerramento,
+                                    crm_conversation_id=crm_conversation_id,
+                                    crm_channel_id=crm_channel_id)
+            await _desativar_automacao(crm_contact_id, phone=phone)
+            print(f"[handle] Numero errado detectado para {phone}, encerrando.", flush=True)
+            return
+
         # Envia feedback imediato antes de operações lentas (simulação ~30-60s)
         if _vai_rodar_simulacao(state, data, text, user):
             await send_text_message(phone, "Certo, um instante que irei simular!",
