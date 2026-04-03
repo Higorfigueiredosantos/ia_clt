@@ -685,7 +685,15 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             r"algum\s*valor\s*maior|disponivel\s*so\s*isso|so\s*esse\s*valor|"
             r"n[aã]o\s*tem\s*disponivel|mais\s*nada)", t))
         quer_outros = bool(re.search(r"(outr[ao]|prazo|diferente|trocar|mudar|alt[ao]|car[ao]|muito|elevad|menor|reduz|abaixa|parcela|valor menor|ver outr|simul|queria ver|quero ver)", t))
-        quer_prosseguir = bool(re.search(r"\b(sim|confirmo|prosseguir|aceito|vamos|quero|ok|okay)\b", t)) and "?" not in text
+        quer_prosseguir = bool(re.search(
+            r"\b(sim|s|confirmo|prosseguir|prossegue|aceito|aceita|vamos|quero|ok|okay|"
+            r"blz|beleza|certo|pode|pode\s*fazer|pode\s*ser|claro|com\s*certeza|"
+            r"t[oó]|t[aá]\s*bom|fechado|fechar|bora|manda|manda\s*ver|vai|"
+            r"concordo|isso|exato|perfeito|ótimo|otimo|legal|show|combinado|"
+            r"positivo|afirmativo|continua|continue|segue|segue\s*em\s*frente|"
+            r"fazer|fa[cç]a|fa[cç]o|quero\s*sim|quero\s*fazer|quero\s*prosseguir)\b",
+            t
+        )) and "?" not in text
 
         if quer_valor_maior:
             # Refaz simulação em 36x para mostrar o maior valor possível
@@ -874,7 +882,15 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             r"algum\s*valor\s*maior|disponivel\s*so\s*isso|so\s*esse\s*valor|"
             r"n[aã]o\s*tem\s*disponivel|mais\s*nada)", t))
         quer_outros = bool(re.search(r"\b(outro|outros|prazo|prazos|diferente|trocar|mudar|alta|alto|caro|muito|elevad|menor|reduz|abaixa|parcela|parcelas|valor menor|quero ver|ver outr|simul|queria ver)\b", t))
-        quer_prosseguir = bool(re.search(r"\b(sim|confirmo|prosseguir|aceito|vamos|quero|ok|okay)\b", t)) and "?" not in text
+        quer_prosseguir = bool(re.search(
+            r"\b(sim|s|confirmo|prosseguir|prossegue|aceito|aceita|vamos|quero|ok|okay|"
+            r"blz|beleza|certo|pode|pode\s*fazer|pode\s*ser|claro|com\s*certeza|"
+            r"t[oó]|t[aá]\s*bom|fechado|fechar|bora|manda|manda\s*ver|vai|"
+            r"concordo|isso|exato|perfeito|ótimo|otimo|legal|show|combinado|"
+            r"positivo|afirmativo|continua|continue|segue|segue\s*em\s*frente|"
+            r"fazer|fa[cç]a|fa[cç]o|quero\s*sim|quero\s*fazer|quero\s*prosseguir)\b",
+            t
+        )) and "?" not in text
 
         if quer_valor_maior:
             # Refaz simulação Facta em 36x com margem máxima
