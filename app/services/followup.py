@@ -33,9 +33,7 @@ _MENSAGENS = {
         "realizar a consulta. Poderia informar?"
     ),
     "CONFIRM_SIMULATION": (
-        "Oi! Sua simulação está aqui, esperando só por você! 🎉 "
-        "O valor já está separado e o processo é 100% online — após assinar, cai via PIX rapidinho. "
-        "Posso prosseguir com a proposta para você?"
+        "Oi! Ficou com alguma dúvida sobre o valor?"
     ),
     "WAITING_CUSTOM_INSTALLMENT": (
         "Oi! Ainda estou aqui para te ajudar. 😊 "
@@ -61,9 +59,7 @@ _MENSAGENS = {
         "Tem outro disponível? Me manda no formato (DDD) 9XXXX-XXXX."
     ),
     "FACTA_CONFIRM_SIMULATION": (
-        "Oi! Sua simulação está aqui, esperando só por você! 🎉 "
-        "O valor já está separado e o processo é 100% online — após assinar, cai via PIX rapidinho. "
-        "Posso prosseguir com a proposta para você?"
+        "Oi! Ficou com alguma dúvida sobre o valor?"
     ),
     "FACTA_WAITING_CUSTOM_INSTALLMENT": (
         "Oi! Ainda estou aqui para te ajudar. 😊 "
@@ -96,8 +92,9 @@ _MENSAGENS_2 = {
         "Oi! Ainda não recebi seu CPF. Assim que puder me enviar, dou continuidade à simulação!"
     ),
     "CONFIRM_SIMULATION": (
-        "Oi! Passando para lembrar que sua simulação ainda está disponível. 💰 "
-        "É rápido, seguro e o dinheiro cai via PIX. Me confirma para eu gerar sua proposta?"
+        "Passando para lembrar que sua simulação ainda está disponível. 💰 "
+        "É rápido, seguro e o dinheiro creditado via PIX em até 5 minutos. "
+        "Me confirma para possamos prosseguir?"
     ),
     "WAITING_CUSTOM_INSTALLMENT": (
         "Oi! Me conta qual valor de parcela cabe melhor no seu orçamento. "
@@ -119,8 +116,9 @@ _MENSAGENS_2 = {
         "Oi! Ainda preciso de um número alternativo de WhatsApp para enviar o link. Tem outro disponível?"
     ),
     "FACTA_CONFIRM_SIMULATION": (
-        "Oi! Passando para lembrar que sua simulação ainda está disponível. 💰 "
-        "É rápido, seguro e o dinheiro cai via PIX. Me confirma para eu gerar sua proposta?"
+        "Passando para lembrar que sua simulação ainda está disponível. 💰 "
+        "É rápido, seguro e o dinheiro creditado via PIX em até 5 minutos. "
+        "Me confirma para possamos prosseguir?"
     ),
     "FACTA_WAITING_CUSTOM_INSTALLMENT": (
         "Oi! Me conta qual valor de parcela cabe melhor no seu orçamento. "
