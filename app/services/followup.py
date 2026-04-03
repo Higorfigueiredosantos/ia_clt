@@ -33,15 +33,17 @@ _MENSAGENS = {
         "realizar a consulta. Poderia informar?"
     ),
     "CONFIRM_SIMULATION": (
-        "Ainda está por aqui? Já tenho sua simulação pronta — "
-        "para prosseguir é só me confirmar! 😊"
+        "Oi! Sua simulação está aqui, esperando só por você! 🎉 "
+        "O valor já está separado e o processo é 100% online — após assinar, cai via PIX rapidinho. "
+        "Posso prosseguir com a proposta para você?"
     ),
     "WAITING_CUSTOM_INSTALLMENT": (
-        "Ainda aguardo o valor de parcela que ficaria mais confortável para você. "
-        "Qual valor prefere?"
+        "Oi! Ainda estou aqui para te ajudar. 😊 "
+        "Qual valor de parcela ficaria mais confortável no seu bolso?"
     ),
     "WAITING_CUSTOM_TERM": (
-        "Qual prazo você prefere para a simulação? Me avisa para eu seguir em frente! 😊"
+        "Oi! Só falta escolher o prazo para finalizarmos sua simulação. "
+        "Qual prefere: 8x, 10x, 12x, 18x, 24x ou 36x? 😊"
     ),
     "WAITING_ADDRESS_CEP": (
         "Para finalizar sua proposta, precisamos do seu CEP. Poderia me informar?"
@@ -59,15 +61,17 @@ _MENSAGENS = {
         "Tem outro disponível? Me manda no formato (DDD) 9XXXX-XXXX."
     ),
     "FACTA_CONFIRM_SIMULATION": (
-        "Ainda está por aqui? Já tenho uma proposta disponível para você — "
-        "deseja prosseguir? 😊"
+        "Oi! Sua simulação está aqui, esperando só por você! 🎉 "
+        "O valor já está separado e o processo é 100% online — após assinar, cai via PIX rapidinho. "
+        "Posso prosseguir com a proposta para você?"
     ),
     "FACTA_WAITING_CUSTOM_INSTALLMENT": (
-        "Ainda aguardo o valor de parcela preferido. "
-        "Qual valor ficaria mais confortável para você?"
+        "Oi! Ainda estou aqui para te ajudar. 😊 "
+        "Qual valor de parcela ficaria mais confortável no seu bolso?"
     ),
     "FACTA_WAITING_CUSTOM_TERM": (
-        "Qual prazo prefere para a simulação? Me avisa para continuarmos! 😊"
+        "Oi! Só falta escolher o prazo para finalizarmos sua simulação. "
+        "Qual prefere: 12x, 18x, 24x ou 36x? 😊"
     ),
     "FACTA_WAITING_CEP": (
         "Para finalizar sua proposta, precisamos do seu CEP. Poderia me informar?"
@@ -92,15 +96,15 @@ _MENSAGENS_2 = {
         "Oi! Ainda não recebi seu CPF. Assim que puder me enviar, dou continuidade à simulação!"
     ),
     "CONFIRM_SIMULATION": (
-        "Oi! Sua simulação continua disponível aqui. "
-        "Basta me confirmar para prosseguirmos com a proposta! 😊"
+        "Oi! Passando para lembrar que sua simulação ainda está disponível. 💰 "
+        "É rápido, seguro e o dinheiro cai via PIX. Me confirma para eu gerar sua proposta?"
     ),
     "WAITING_CUSTOM_INSTALLMENT": (
-        "Oi! Me lembro que você estava escolhendo o valor da parcela. "
-        "Qual ficaria mais confortável para você?"
+        "Oi! Me conta qual valor de parcela cabe melhor no seu orçamento. "
+        "Assim consigo simular certinho para você! 😊"
     ),
     "WAITING_CUSTOM_TERM": (
-        "Oi! Ainda aguardo a escolha do prazo. Temos as opções: 8x, 10x, 12x, 18x, 24x ou 36x. Qual prefere?"
+        "Oi! Ainda aguardo a escolha do prazo. Temos: 8x, 10x, 12x, 18x, 24x ou 36x. Qual prefere?"
     ),
     "WAITING_ADDRESS_CEP": (
         "Oi! Para finalizarmos sua proposta só falta o CEP. Pode me enviar?"
@@ -115,10 +119,12 @@ _MENSAGENS_2 = {
         "Oi! Ainda preciso de um número alternativo de WhatsApp para enviar o link. Tem outro disponível?"
     ),
     "FACTA_CONFIRM_SIMULATION": (
-        "Oi! Sua proposta ainda está disponível. Quando quiser prosseguir é só me falar! 😊"
+        "Oi! Passando para lembrar que sua simulação ainda está disponível. 💰 "
+        "É rápido, seguro e o dinheiro cai via PIX. Me confirma para eu gerar sua proposta?"
     ),
     "FACTA_WAITING_CUSTOM_INSTALLMENT": (
-        "Oi! Ainda aguardo o valor de parcela de sua preferência. Qual ficaria bom para você?"
+        "Oi! Me conta qual valor de parcela cabe melhor no seu orçamento. "
+        "Assim consigo simular certinho para você! 😊"
     ),
     "FACTA_WAITING_CUSTOM_TERM": (
         "Oi! Ainda aguardo a escolha do prazo. Temos: 12x, 18x, 24x ou 36x. Qual prefere?"
