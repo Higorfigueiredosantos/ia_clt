@@ -812,12 +812,12 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             return (
                 f"O crédito CLT é uma das linhas com melhores condições do mercado. 😊 "
                 f"Para reduzir o valor da parcela, me diz qual valor ficaria melhor para você?\n"
-                f"(Máximo disponível: {_brl(margem)})"
+                f"(Parcela máxima disponível: {_brl(margem)})"
             ), State.WAITING_CUSTOM_INSTALLMENT, {}
         if quer_outra_parcela:
             return (
                 f"Claro! Qual valor de parcela ficaria melhor para você?\n"
-                f"(Máximo disponível: {_brl(margem)})"
+                f"(Parcela máxima disponível: {_brl(margem)})"
             ), State.WAITING_CUSTOM_INSTALLMENT, {}
         if quer_outro_prazo:
             return "Claro! Qual prazo prefere? (12x, 18x, 24x ou 36x)", State.WAITING_CUSTOM_TERM, {}
@@ -1049,11 +1049,11 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             return (
                 f"O crédito CLT é uma das linhas com melhores condições do mercado. 😊 "
                 f"Para reduzir o valor da parcela, me diz qual valor ficaria melhor para você?"
-                + (f"\n(Máximo disponível: {_brl(margem_f)})" if margem_f > 0 else "")
+                + (f"\n(Parcela máxima disponível: {_brl(margem_f)})" if margem_f > 0 else "")
             ), State.FACTA_WAITING_CUSTOM_INSTALLMENT, {}
         if quer_outra_parcela_f:
             margem_f = float(data.get("facta_margem") or 0)
-            limite_txt = f"\n(Máximo disponível: {_brl(margem_f)})" if margem_f > 0 else ""
+            limite_txt = f"\n(Parcela máxima disponível: {_brl(margem_f)})" if margem_f > 0 else ""
             return (
                 f"Claro! Qual valor de parcela ficaria melhor para você?{limite_txt}"
             ), State.FACTA_WAITING_CUSTOM_INSTALLMENT, {}
