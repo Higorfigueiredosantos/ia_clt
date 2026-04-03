@@ -669,12 +669,28 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
         _ultima_msg_usuario = next(
             (m for m in reversed(history) if m.get("role") == "user"), None
         )
+        # Mensagens de espera/concordância enviadas antes da simulação chegar → ignora
+        _RE_AGUARDANDO = re.compile(
+            r'^(ok|okay|ok[ao]|tá|ta|tá\s*bom|ta\s*bom|tudo\s*bem|blz|beleza|'
+            r'certo|claro|sim|s|entendi|entendido|pode|tô|to|aguardo|'
+            r'tá\s*certo|ta\s*certo|tá\s*ótimo|ta\s*otimo|combinado|'
+            r'pode\s*ser|tudo\s*bem|show|legal|perfeito|ótimo|otimo|'
+            r'tô\s*aqui|to\s*aqui|estou\s*aqui|vou\s*aguardar|aguardando)[\.\!\,\s]*$',
+            re.I
+        )
         if _ultima_msg_assistente and _ultima_msg_usuario:
             from app.services.followup import _parse_dt as _pdt
             _ts_user = _pdt(_ultima_msg_usuario.get("created_at", ""))
             _ts_bot  = _pdt(_ultima_msg_assistente.get("created_at", ""))
             if _ts_user < _ts_bot:
                 # Mensagem chegou antes da simulação ser enviada (era resposta ao "um instante")
+                return None, State.CONFIRM_SIMULATION, {}
+
+        # Concordância/espera sem ter visto a simulação → ignora silenciosamente
+        if _RE_AGUARDANDO.match(t):
+            # Só ignora se a última mensagem do assistente foi o aviso de "um instante"
+            _ultimo_bot_txt = (_ultima_msg_assistente or {}).get("content", "").lower()
+            if "instante" in _ultimo_bot_txt or "aguard" in _ultimo_bot_txt or "simular" in _ultimo_bot_txt:
                 return None, State.CONFIRM_SIMULATION, {}
 
         # Redireciona para outra simulação se pedir outro prazo/parcela OU reclamar que está alto/caro
@@ -873,6 +889,12 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             _ts_user = _pdt(_ultima_msg_usuario.get("created_at", ""))
             _ts_bot  = _pdt(_ultima_msg_assistente.get("created_at", ""))
             if _ts_user < _ts_bot:
+                return None, State.FACTA_CONFIRM_SIMULATION, {}
+
+        # Concordância/espera sem ter visto a simulação → ignora silenciosamente
+        if _RE_AGUARDANDO.match(t):
+            _ultimo_bot_txt = (_ultima_msg_assistente or {}).get("content", "").lower()
+            if "instante" in _ultimo_bot_txt or "aguard" in _ultimo_bot_txt or "simular" in _ultimo_bot_txt:
                 return None, State.FACTA_CONFIRM_SIMULATION, {}
 
         quer_valor_maior = bool(re.search(
