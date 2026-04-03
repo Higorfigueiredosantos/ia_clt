@@ -729,7 +729,9 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             r"[eé]\s*esse\s*mesmo|tem\s*outro\s*valor|n[aã]o\s*d[aá]\s*mais|"
             r"algum\s*valor\s*maior|disponivel\s*so\s*isso|so\s*esse\s*valor|"
             r"n[aã]o\s*tem\s*disponivel|mais\s*nada)", t))
-        quer_outros = bool(re.search(r"(outr[ao]|prazo|diferente|trocar|mudar|alt[ao]|car[ao]|muito|elevad|menor|reduz|abaixa|parcela|valor menor|ver outr|simul|queria ver|quero ver)", t))
+        quer_outro_prazo = bool(re.search(r"\b(outro\s*prazo|outros\s*prazos|ver\s*prazo|mudar\s*prazo|trocar\s*prazo|prazo\s*diferente|outr[ao]\s*prazo|opç[oõ]es?\s*de\s*prazo)\b", t))
+        quer_outra_parcela = bool(re.search(r"\b(parcela\s*(alt[ao]|cara|muito|menor|diferente|menor|reduz|abaixa)|alt[ao]|car[ao]|muito\s*(alt[ao]|car[ao])|valor\s*menor|reduz|abaixa|parcela\s*menor|outra\s*parcela|outro\s*valor\s*de\s*parcela)\b", t))
+        quer_outros = quer_outro_prazo or quer_outra_parcela
         quer_prosseguir = bool(re.search(
             r"\b(sim|s|confirmo|prosseguir|prossegue|aceito|aceita|vamos|quero|ok|okay|"
             r"blz|beleza|certo|pode|pode\s*fazer|pode\s*ser|claro|com\s*certeza|"
@@ -805,7 +807,12 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
                     f"Podemos prosseguir com essa? 😊"
                 ), State.CONFIRM_SIMULATION, {"simulation_id": first_sim["simulation_id"]}
 
-        if quer_outros:
+        if quer_outra_parcela:
+            return (
+                f"Claro! Qual valor de parcela ficaria melhor para você?\n"
+                f"(O valor máximo disponível é {_brl(margem)})"
+            ), State.WAITING_CUSTOM_INSTALLMENT, {}
+        if quer_outro_prazo:
             return "Claro! Qual prazo prefere? (12x, 18x, 24x ou 36x)", State.WAITING_CUSTOM_TERM, {}
         if quer_prosseguir:
             limpar = {k: None for k in ["address_cep","address_street","address_number",
@@ -973,7 +980,9 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             r"[eé]\s*esse\s*mesmo|tem\s*outro\s*valor|n[aã]o\s*d[aá]\s*mais|"
             r"algum\s*valor\s*maior|disponivel\s*so\s*isso|so\s*esse\s*valor|"
             r"n[aã]o\s*tem\s*disponivel|mais\s*nada)", t))
-        quer_outros = bool(re.search(r"\b(outro|outros|prazo|prazos|diferente|trocar|mudar|alta|alto|caro|muito|elevad|menor|reduz|abaixa|parcela|parcelas|valor menor|quero ver|ver outr|simul|queria ver)\b", t))
+        quer_outro_prazo_f = bool(re.search(r"\b(outro\s*prazo|outros\s*prazos|ver\s*prazo|mudar\s*prazo|trocar\s*prazo|prazo\s*diferente|outr[ao]\s*prazo|opç[oõ]es?\s*de\s*prazo)\b", t))
+        quer_outra_parcela_f = bool(re.search(r"\b(parcela\s*(alt[ao]|cara|muito|menor|diferente|reduz|abaixa)|alt[ao]|car[ao]|muito\s*(alt[ao]|car[ao])|valor\s*menor|reduz|abaixa|parcela\s*menor|outra\s*parcela|outro\s*valor\s*de\s*parcela)\b", t))
+        quer_outros = quer_outro_prazo_f or quer_outra_parcela_f
         quer_prosseguir = bool(re.search(
             r"\b(sim|s|confirmo|prosseguir|prossegue|aceito|aceita|vamos|quero|ok|okay|"
             r"blz|beleza|certo|pode|pode\s*fazer|pode\s*ser|claro|com\s*certeza|"
@@ -1027,7 +1036,13 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
                     f"Podemos prosseguir com essa? 😊"
                 ), State.FACTA_CONFIRM_SIMULATION, {"facta_sim_selecionada": facta_sim_inicial}
 
-        if quer_outros:
+        if quer_outra_parcela_f:
+            margem_f = float(data.get("facta_margem") or 0)
+            limite_txt = f"O valor máximo disponível é {_brl(margem_f)}" if margem_f > 0 else "Informe o valor desejado"
+            return (
+                f"Claro! Qual valor de parcela ficaria melhor para você?\n({limite_txt})"
+            ), State.FACTA_WAITING_CUSTOM_INSTALLMENT, {}
+        if quer_outro_prazo_f:
             return "Claro! Qual prazo prefere? (12x, 18x, 24x ou 36x)", State.FACTA_WAITING_CUSTOM_TERM, {}
         if quer_prosseguir:
             limpar = {k: None for k in ["address_cep","address_street","address_number",
