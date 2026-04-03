@@ -888,7 +888,12 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             reply = await asyncio.to_thread(_ask_gpt, state, data, user, history,
                 "Responda a dúvida do cliente usando o FAQ. Depois peça a chave PIX (CPF, celular, email ou chave aleatória).")
             return reply, State.WAITING_PIX_KEY, {}
-        merged = {**data, "pix_key": text.strip()}
+        # Cliente digitou "cpf" ou "meu cpf" → usa o CPF armazenado como chave
+        _RE_QUER_CPF = re.compile(r'^(meu\s*)?cpf[\s\.]*$', re.I)
+        pix_key_raw = text.strip()
+        if _RE_QUER_CPF.match(pix_key_raw):
+            pix_key_raw = re.sub(r"\D", "", user.get("cpf") or data.get("cpf", "")) or pix_key_raw
+        merged = {**data, "pix_key": pix_key_raw}
         return await _gerar_proposta(user, merged)
 
     # ── FACTA: WAITING_CONSENT ────────────────────────────────────────────────
@@ -1099,7 +1104,11 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             reply = await asyncio.to_thread(_ask_gpt, state, data, user, history,
                 "Responda a dúvida do cliente usando o FAQ. Depois peça a chave PIX (CPF, celular, email ou chave aleatória).")
             return reply, State.FACTA_WAITING_PIX_KEY, {}
-        merged = {**data, "pix_key": text.strip()}
+        # Cliente digitou "cpf" ou "meu cpf" → usa o CPF armazenado como chave
+        pix_key_raw_f = text.strip()
+        if re.match(r'^(meu\s*)?cpf[\s\.]*$', pix_key_raw_f, re.I):
+            pix_key_raw_f = re.sub(r"\D", "", user.get("cpf") or data.get("cpf", "")) or pix_key_raw_f
+        merged = {**data, "pix_key": pix_key_raw_f}
         return await _gerar_proposta_facta(user, merged)
 
     # ── PROPOSAL_SENT ─────────────────────────────────────────────────────────
