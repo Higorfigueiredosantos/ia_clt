@@ -806,10 +806,7 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
                 ), State.CONFIRM_SIMULATION, {"simulation_id": first_sim["simulation_id"]}
 
         if quer_outros:
-            return (
-                f"Claro! Qual valor de parcela deseja que simule para você?\n"
-                f"(O valor máximo permitido é {_brl(margem)})"
-            ), State.WAITING_CUSTOM_INSTALLMENT, {}
+            return "Claro! Qual prazo prefere? (12x, 18x, 24x ou 36x)", State.WAITING_CUSTOM_TERM, {}
         if quer_prosseguir:
             limpar = {k: None for k in ["address_cep","address_street","address_number",
                                          "address_neighborhood","address_city","address_state",
@@ -1031,11 +1028,7 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
                 ), State.FACTA_CONFIRM_SIMULATION, {"facta_sim_selecionada": facta_sim_inicial}
 
         if quer_outros:
-            margem = float(data.get("facta_margem") or 0)
-            limite_txt = f"O valor máximo disponível é {_brl(margem)}" if margem > 0 else "Informe o valor desejado"
-            return (
-                f"Claro! Qual valor de parcela deseja que simule para você?\n({limite_txt})"
-            ), State.FACTA_WAITING_CUSTOM_INSTALLMENT, {}
+            return "Claro! Qual prazo prefere? (12x, 18x, 24x ou 36x)", State.FACTA_WAITING_CUSTOM_TERM, {}
         if quer_prosseguir:
             limpar = {k: None for k in ["address_cep","address_street","address_number",
                                          "address_neighborhood","address_city","address_state",
