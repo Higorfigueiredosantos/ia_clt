@@ -774,37 +774,51 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
                 f"Deseja que eu simule com esse valor?"
             ), State.WAITING_CUSTOM_INSTALLMENT, {}
 
-        # Cliente quer a primeira simulação ou uma por prazo específico
-        _RE_PRIMEIRA = re.compile(
-            r'\b(primeira|anterior|aquela|original|a\s*de\s*antes|volta\s*a|de\s*volta|'
-            r'pode\s*ser\s*(a\s*)?(primeira|essa|aquela)|'
-            r'(\d{1,2})\s*[xX×]|em\s*(\d{1,2})\s*(parcelas?|meses?|vezes?))\b', re.I
+        # Detecta prazo específico mencionado (ex: "18x", "em 18", "dividido em 24", "de 24 meses")
+        _PRAZOS_V8_VALIDOS = {8, 10, 12, 18, 24, 36}
+        _RE_PRAZO_ESPECIFICO = re.compile(
+            r'(\d{1,2})\s*[xX×]|'                                  # "18x", "24X"
+            r'(?:em|de|dividido\s*em|parcelado\s*em|no\s*prazo\s*de)\s*(\d{1,2})'
+            r'(?:\s*(?:parcelas?|meses?|vezes?|x))?',               # "em 24", "dividido em 24", "de 36 meses"
+            re.I
         )
-        m_primeira = _RE_PRIMEIRA.search(t)
-        if m_primeira:
-            # Tenta detectar prazo específico mencionado (ex: "18x", "em 18")
-            prazo_mencionado = None
-            m_prazo = re.search(r'(\d{1,2})\s*[xX×]|em\s*(\d{1,2})\s*(?:parcelas?|meses?|vezes?)', t)
-            if m_prazo:
-                prazo_mencionado = int(m_prazo.group(1) or m_prazo.group(2))
+        m_prazo_esp = _RE_PRAZO_ESPECIFICO.search(t)
+        prazo_mencionado_esp = None
+        if m_prazo_esp:
+            raw = int(m_prazo_esp.group(1) or m_prazo_esp.group(2))
+            if raw in _PRAZOS_V8_VALIDOS:
+                prazo_mencionado_esp = raw
 
+        if prazo_mencionado_esp:
             consult_id = data.get("consult_id", "")
             installments_options = data.get("installments_options", [])
-            first_sim = data.get("first_sim")
+            num_atual = int(data.get("num_parcelas", 0))
+            opcao_p = next((o for o in installments_options if int(o.get("installmentNumbers", 0)) == prazo_mencionado_esp), None)
+            if opcao_p and consult_id:
+                vp = min(float(opcao_p["maxInstallmentValue"]), margem)
+                sim_p = await asyncio.to_thread(
+                    executar_simulacao, consult_id, config.V8_CONFIG_ID, vp, prazo_mencionado_esp
+                )
+                prefixo = (f"A simulação atual é em {num_atual}x. " if num_atual and num_atual != prazo_mencionado_esp else "")
+                return (
+                    f"{prefixo}Aqui está a simulação em {prazo_mencionado_esp}x:\n\n"
+                    f"💰 Valor liberado: {_brl(sim_p['disbursement_amount'])}\n"
+                    f"📅 Parcelas: {sim_p['number_of_installments']}x de {_brl(sim_p['installment_value'])}\n\n"
+                    f"Podemos prosseguir com essa? 😊"
+                ), State.CONFIRM_SIMULATION, {"simulation_id": sim_p["simulation_id"], "num_parcelas": sim_p["number_of_installments"]}
+            elif not opcao_p:
+                return (
+                    f"Esse prazo não está disponível. Os prazos aceitos são: 8x, 10x, 12x, 18x, 24x ou 36x. "
+                    f"Qual prefere?"
+                ), State.WAITING_CUSTOM_TERM, {}
 
-            if prazo_mencionado and consult_id:
-                opcao_p = next((o for o in installments_options if int(o.get("installmentNumbers", 0)) == prazo_mencionado), None)
-                if opcao_p:
-                    vp = min(float(opcao_p["maxInstallmentValue"]), margem)
-                    sim_p = await asyncio.to_thread(
-                        executar_simulacao, consult_id, config.V8_CONFIG_ID, vp, prazo_mencionado
-                    )
-                    return (
-                        f"Claro! Aqui está a simulação em {prazo_mencionado}x:\n\n"
-                        f"💰 Valor liberado: {_brl(sim_p['disbursement_amount'])}\n"
-                        f"📅 Parcelas: {sim_p['number_of_installments']}x de {_brl(sim_p['installment_value'])}\n\n"
-                        f"Podemos prosseguir com essa? 😊"
-                    ), State.CONFIRM_SIMULATION, {"simulation_id": sim_p["simulation_id"]}
+        # Cliente quer a primeira simulação
+        _RE_PRIMEIRA = re.compile(
+            r'\b(primeira|anterior|aquela|original|a\s*de\s*antes|volta\s*a|de\s*volta|'
+            r'pode\s*ser\s*(a\s*)?(primeira|essa|aquela))\b', re.I
+        )
+        if _RE_PRIMEIRA.search(t):
+            first_sim = data.get("first_sim")
             if first_sim:
                 return (
                     f"Claro! Aqui está a primeira simulação novamente:\n\n"
@@ -1044,28 +1058,41 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
                 f"Deseja prosseguir com a proposta atual?"
             ), State.FACTA_CONFIRM_SIMULATION, {}
 
-        # Cliente quer a primeira simulação ou uma por prazo específico
-        m_primeira_f = _RE_PRIMEIRA.search(t)
-        if m_primeira_f:
-            prazo_mencionado_f = None
-            m_prazo_f = re.search(r'(\d{1,2})\s*[xX×]|em\s*(\d{1,2})\s*(?:parcelas?|meses?|vezes?)', t)
-            if m_prazo_f:
-                prazo_mencionado_f = int(m_prazo_f.group(1) or m_prazo_f.group(2))
+        # Detecta prazo específico mencionado (ex: "18x", "em 18", "dividido em 24")
+        _PRAZOS_FACTA_VALIDOS = {12, 18, 24, 36}
+        _RE_PRAZO_ESP_F = re.compile(
+            r'(\d{1,2})\s*[xX×]|'
+            r'(?:em|de|dividido\s*em|parcelado\s*em|no\s*prazo\s*de)\s*(\d{1,2})'
+            r'(?:\s*(?:parcelas?|meses?|vezes?|x))?',
+            re.I
+        )
+        m_prazo_esp_f = _RE_PRAZO_ESP_F.search(t)
+        prazo_esp_f = None
+        if m_prazo_esp_f:
+            raw_f = int(m_prazo_esp_f.group(1) or m_prazo_esp_f.group(2))
+            if raw_f in _PRAZOS_FACTA_VALIDOS:
+                prazo_esp_f = raw_f
 
-            facta_sim_inicial = data.get("facta_sim_inicial")
+        if prazo_esp_f:
             facta_simulacoes = data.get("facta_simulacoes", [])
+            num_atual_f = int((data.get("facta_sim_selecionada") or {}).get("prazo") or 0)
+            sim_p_f = next((s for s in facta_simulacoes if int(s.get("prazo", 0)) == prazo_esp_f), None)
+            if sim_p_f:
+                vl_f = float(sim_p_f.get("valor_liquido") or sim_p_f.get("valorLiquido") or sim_p_f.get("valorLiberado") or 0)
+                vp_f = float(sim_p_f.get("parcela") or sim_p_f.get("valorParcela") or 0)
+                prefixo_f = (f"A simulação atual é em {num_atual_f}x. " if num_atual_f and num_atual_f != prazo_esp_f else "")
+                return (
+                    f"{prefixo_f}Aqui está a simulação em {prazo_esp_f}x:\n\n"
+                    f"💰 Valor liberado: *{_brl(vl_f)}*\n"
+                    f"📅 Parcelas: {prazo_esp_f}x de {_brl(vp_f)}\n\n"
+                    f"Podemos prosseguir com essa? 😊"
+                ), State.FACTA_CONFIRM_SIMULATION, {"facta_sim_selecionada": sim_p_f}
+            else:
+                return await _rodar_simulacao_facta_custom(user, data, float(data.get("facta_margem") or 0), prazo_esp_f)
 
-            if prazo_mencionado_f and facta_simulacoes:
-                sim_p_f = next((s for s in facta_simulacoes if int(s.get("prazo", 0)) == prazo_mencionado_f), None)
-                if sim_p_f:
-                    vl_f = float(sim_p_f.get("valor_liquido") or sim_p_f.get("valorLiquido") or sim_p_f.get("valorLiberado") or 0)
-                    vp_f = float(sim_p_f.get("parcela") or sim_p_f.get("valorParcela") or 0)
-                    return (
-                        f"Claro! Aqui está a simulação em {prazo_mencionado_f}x:\n\n"
-                        f"💰 Valor liberado: *{_brl(vl_f)}*\n"
-                        f"📅 Parcelas: {prazo_mencionado_f}x de {_brl(vp_f)}\n\n"
-                        f"Podemos prosseguir com essa? 😊"
-                    ), State.FACTA_CONFIRM_SIMULATION, {"facta_sim_selecionada": sim_p_f}
+        # Cliente quer a primeira simulação
+        if _RE_PRIMEIRA.search(t):
+            facta_sim_inicial = data.get("facta_sim_inicial")
             if facta_sim_inicial:
                 vl_i = float(facta_sim_inicial.get("valor_liquido") or facta_sim_inicial.get("valorLiquido") or facta_sim_inicial.get("valorLiberado") or 0)
                 vp_i = float(facta_sim_inicial.get("parcela") or facta_sim_inicial.get("valorParcela") or 0)
