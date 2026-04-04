@@ -730,7 +730,12 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             r"algum\s*valor\s*maior|disponivel\s*so\s*isso|so\s*esse\s*valor|"
             r"n[aã]o\s*tem\s*disponivel|mais\s*nada)", t))
         quer_juros_alto = bool(re.search(r"\b(juro\s*(alt[ao]|car[ao]|elevad|muito|absurd)|taxa\s*(alt[ao]|car[ao]|elevad|muito)|muito\s*juro|juro\s*absurd|juro\s*pesad)\b", t))
-        quer_outro_prazo = bool(re.search(r"\b(outro\s*prazo|outros\s*prazos|ver\s*prazo|mudar\s*prazo|trocar\s*prazo|prazo\s*diferente|outr[ao]\s*prazo|opç[oõ]es?\s*de\s*prazo)\b", t))
+        quer_outro_prazo = bool(re.search(
+            r"\b(outro\s*prazo|outros\s*prazos|ver\s*prazo|mudar\s*prazo|trocar\s*prazo|"
+            r"prazo\s*diferente|outr[ao]\s*prazo|opç[oõ]es?\s*de\s*prazo|"
+            r"prazo\s*maior|maior\s*prazo|prazo\s*m[aá]ximo|m[aá]ximo\s*prazo|"
+            r"mais\s*meses|mais\s*prazo|prazo\s*mais\s*(long|extens|grand)|"
+            r"tem\s*prazo\s*maior|tem\s*um\s*prazo\s*maior|prazo\s*maior\s*tem)\b", t))
         quer_outra_parcela = bool(re.search(r"\b(parcela\s*(alt[ao]|cara|muito|menor|diferente|reduz|abaixa)|valor\s*menor|reduz|abaixa|parcela\s*menor|outra\s*parcela|outro\s*valor\s*de\s*parcela)\b", t))
         quer_outros = quer_juros_alto or quer_outro_prazo or quer_outra_parcela
         quer_prosseguir = bool(re.search(
@@ -820,6 +825,29 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
                 f"(Parcela máxima disponível: {_brl(margem)})"
             ), State.WAITING_CUSTOM_INSTALLMENT, {}
         if quer_outro_prazo:
+            # "prazo maior / máximo / mais meses" → simula 36x direto
+            quer_prazo_maior = bool(re.search(
+                r"\b(prazo\s*maior|maior\s*prazo|prazo\s*m[aá]ximo|m[aá]ximo\s*prazo|"
+                r"mais\s*meses|mais\s*prazo|prazo\s*maior\s*tem|tem\s*prazo\s*maior)\b", t))
+            if quer_prazo_maior:
+                consult_id = data.get("consult_id", "")
+                installments_options = data.get("installments_options", [])
+                opcao_36 = next((o for o in installments_options if int(o.get("installmentNumbers", 0)) == 36), None)
+                if opcao_36 and consult_id:
+                    installment_36 = float(opcao_36.get("installmentValue", 0))
+                    sim36 = await asyncio.to_thread(
+                        executar_simulacao, consult_id, config.V8_CONFIG_ID, installment_36, 36
+                    )
+                    reply36 = (
+                        f"Simulei no prazo máximo de 36x para você! 😊\n\n"
+                        f"💰 Valor liberado: {_brl(sim36['disbursement_amount'])}\n"
+                        f"📅 Parcelas: {sim36['number_of_installments']}x de {_brl(sim36['installment_value'])}\n\n"
+                        f"Podemos prosseguir ou deseja ver outros prazos? 😊"
+                    )
+                    return reply36, State.CONFIRM_SIMULATION, {
+                        "simulation_id": sim36["simulation_id"],
+                        "num_parcelas": sim36["number_of_installments"],
+                    }
             return "Claro! Qual prazo prefere? (12x, 18x, 24x ou 36x)", State.WAITING_CUSTOM_TERM, {}
         if quer_prosseguir:
             limpar = {k: None for k in ["address_cep","address_street","address_number",
@@ -988,7 +1016,12 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
             r"algum\s*valor\s*maior|disponivel\s*so\s*isso|so\s*esse\s*valor|"
             r"n[aã]o\s*tem\s*disponivel|mais\s*nada)", t))
         quer_juros_alto_f = bool(re.search(r"\b(juro\s*(alt[ao]|car[ao]|elevad|muito|absurd)|taxa\s*(alt[ao]|car[ao]|elevad|muito)|muito\s*juro|juro\s*absurd|juro\s*pesad)\b", t))
-        quer_outro_prazo_f = bool(re.search(r"\b(outro\s*prazo|outros\s*prazos|ver\s*prazo|mudar\s*prazo|trocar\s*prazo|prazo\s*diferente|outr[ao]\s*prazo|opç[oõ]es?\s*de\s*prazo)\b", t))
+        quer_outro_prazo_f = bool(re.search(
+            r"\b(outro\s*prazo|outros\s*prazos|ver\s*prazo|mudar\s*prazo|trocar\s*prazo|"
+            r"prazo\s*diferente|outr[ao]\s*prazo|opç[oõ]es?\s*de\s*prazo|"
+            r"prazo\s*maior|maior\s*prazo|prazo\s*m[aá]ximo|m[aá]ximo\s*prazo|"
+            r"mais\s*meses|mais\s*prazo|prazo\s*mais\s*(long|extens|grand)|"
+            r"tem\s*prazo\s*maior|tem\s*um\s*prazo\s*maior|prazo\s*maior\s*tem)\b", t))
         quer_outra_parcela_f = bool(re.search(r"\b(parcela\s*(alt[ao]|cara|muito|menor|diferente|reduz|abaixa)|valor\s*menor|reduz|abaixa|parcela\s*menor|outra\s*parcela|outro\s*valor\s*de\s*parcela)\b", t))
         quer_outros = quer_juros_alto_f or quer_outro_prazo_f or quer_outra_parcela_f
         quer_prosseguir = bool(re.search(
@@ -1058,6 +1091,14 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
                 f"Claro! Qual valor de parcela ficaria melhor para você?{limite_txt}"
             ), State.FACTA_WAITING_CUSTOM_INSTALLMENT, {}
         if quer_outro_prazo_f:
+            # "prazo maior / máximo / mais meses" → simula 36x direto
+            quer_prazo_maior_f = bool(re.search(
+                r"\b(prazo\s*maior|maior\s*prazo|prazo\s*m[aá]ximo|m[aá]ximo\s*prazo|"
+                r"mais\s*meses|mais\s*prazo|prazo\s*maior\s*tem|tem\s*prazo\s*maior)\b", t))
+            if quer_prazo_maior_f:
+                margem_facta = float(data.get("facta_margem") or 0)
+                if margem_facta > 0:
+                    return await _rodar_simulacao_facta_custom(user, data, margem_facta, 36)
             return "Claro! Qual prazo prefere? (12x, 18x, 24x ou 36x)", State.FACTA_WAITING_CUSTOM_TERM, {}
         if quer_prosseguir:
             limpar = {k: None for k in ["address_cep","address_street","address_number",
