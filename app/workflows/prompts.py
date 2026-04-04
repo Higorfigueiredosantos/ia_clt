@@ -44,6 +44,7 @@ Quando o cliente fizer uma pergunta, responda de forma clara e objetiva, e em se
 **Cancelamento:** Até 7 dias após receber, devolvendo o valor.
 **Quitação antecipada:** Sim, pode quitar ou renegociar quando quiser.
 **Saque aniversário FGTS:** Pode contratar normalmente.
+**Já tem empréstimo ativo:** Sem problema! Pode ter até 3 contratos ativos ao mesmo tempo, desde que caiba na margem.
 **Documentos:** Tudo pelo link da proposta, 100% digital.
 **Segurança:** Processo digital integrado ao eSocial.
 
