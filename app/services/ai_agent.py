@@ -740,11 +740,13 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
         quer_outros = quer_juros_alto or quer_outro_prazo or quer_outra_parcela
         quer_prosseguir = bool(re.search(
             r"\b(sim|s|confirmo|prosseguir|prossegue|aceito|aceita|vamos|quero|ok|okay|"
-            r"blz|beleza|certo|pode|pode\s*fazer|pode\s*ser|claro|com\s*certeza|"
+            r"blz|beleza|certo|pode|podemos|pode\s*fazer|pode\s*ser|pode\s*ir|claro|com\s*certeza|"
             r"t[oó]|t[aá]\s*bom|fechado|fechar|bora|manda|manda\s*ver|vai|"
             r"concordo|isso|exato|perfeito|ótimo|otimo|legal|show|combinado|"
-            r"positivo|afirmativo|continua|continue|segue|segue\s*em\s*frente|"
-            r"fazer|fa[cç]a|fa[cç]o|quero\s*sim|quero\s*fazer|quero\s*prosseguir)\b",
+            r"positivo|afirmativo|continua|continue|segue|seguir|segue\s*em\s*frente|"
+            r"vamos\s*l[aá]|tamo|embora|fazer|fa[cç]a|fa[cç]o|"
+            r"quero\s*sim|quero\s*fazer|quero\s*prosseguir|pode\s*prosseguir|podemos\s*seguir|"
+            r"pode\s*seguir|vamos\s*seguir|pode\s*ir\s*em\s*frente)\b",
             t
         )) and "?" not in text
 
@@ -1040,11 +1042,13 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
         quer_outros = quer_juros_alto_f or quer_outro_prazo_f or quer_outra_parcela_f
         quer_prosseguir = bool(re.search(
             r"\b(sim|s|confirmo|prosseguir|prossegue|aceito|aceita|vamos|quero|ok|okay|"
-            r"blz|beleza|certo|pode|pode\s*fazer|pode\s*ser|claro|com\s*certeza|"
+            r"blz|beleza|certo|pode|podemos|pode\s*fazer|pode\s*ser|pode\s*ir|claro|com\s*certeza|"
             r"t[oó]|t[aá]\s*bom|fechado|fechar|bora|manda|manda\s*ver|vai|"
             r"concordo|isso|exato|perfeito|ótimo|otimo|legal|show|combinado|"
-            r"positivo|afirmativo|continua|continue|segue|segue\s*em\s*frente|"
-            r"fazer|fa[cç]a|fa[cç]o|quero\s*sim|quero\s*fazer|quero\s*prosseguir)\b",
+            r"positivo|afirmativo|continua|continue|segue|seguir|segue\s*em\s*frente|"
+            r"vamos\s*l[aá]|tamo|embora|fazer|fa[cç]a|fa[cç]o|"
+            r"quero\s*sim|quero\s*fazer|quero\s*prosseguir|pode\s*prosseguir|podemos\s*seguir|"
+            r"pode\s*seguir|vamos\s*seguir|pode\s*ir\s*em\s*frente)\b",
             t
         )) and "?" not in text
 
