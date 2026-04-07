@@ -30,12 +30,12 @@ def update_conversation(conv_id: str, state: str, data_update: dict = None) -> d
     if data_update:
         # Busca data atual e faz merge manual
         current = sb.table("conversations").select("data").eq("id", conv_id).execute()
-        current_data = current.data[0]["data"] if current.data else {}
+        current_data = (current.data[0]["data"] if current.data else None) or {}
         merged_data = {**current_data, **data_update}
         fields["data"] = merged_data
 
     result = sb.table("conversations").update(fields).eq("id", conv_id).execute()
-    return result.data[0]
+    return result.data[0] if result.data else {}
 
 
 def reset_conversation(conv_id: str) -> dict:
@@ -46,7 +46,7 @@ def reset_conversation(conv_id: str) -> dict:
         "state": "GREETING",
         "data": {},
     }).eq("id", conv_id).execute()
-    return result.data[0]
+    return result.data[0] if result.data else {}
 
 
 def save_message(conv_id: str, role: str, content: str) -> dict:
@@ -57,7 +57,7 @@ def save_message(conv_id: str, role: str, content: str) -> dict:
         "role": role,
         "content": content,
     }).execute()
-    return result.data[0]
+    return result.data[0] if result.data else {}
 
 
 def get_messages(conv_id: str, limit: int = 20) -> list[dict]:
