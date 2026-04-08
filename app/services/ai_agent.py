@@ -654,6 +654,13 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
         # Botão "Ver detalhes" → pula saudação e vai direto ao CPF
         if text.strip().lower() == "ver detalhes":
             return "Por gentileza informe o numero do seu CPF, para que possa simular.", State.WAITING_CPF, {}
+        # Mensagens que já indicam interesse em simular → pula recepção e vai direto ao CPF
+        _t_greeting = text.lower().strip()
+        _palavras_interesse = set(re.findall(r"[a-záéíóúâêîôûãõàèìòùç]+", _t_greeting))
+        _tem_interesse = bool(_palavras_interesse & {"interesse", "interessado", "interessada", "simular", "simulacao", "simulação", "quero", "queria", "gostaria"})
+        _tem_credito = bool(_palavras_interesse & {"credito", "crédito", "clt", "emprestimo", "empréstimo"})
+        if _tem_interesse and _tem_credito:
+            return "Por gentileza informe o numero do seu CPF, para que possa simular.", State.WAITING_CPF, {}
         return GREETING_MESSAGE, State.WAITING_SIMULATION_CONFIRM, {}
 
     # ── WAITING_SIMULATION_CONFIRM ────────────────────────────────────────────
