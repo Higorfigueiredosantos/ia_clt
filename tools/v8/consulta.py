@@ -183,12 +183,13 @@ def executar_fluxo_consulta(cpf: str, nome: str, email: str, celular: str, data_
         except Exception as e2:
             print(f"[executar_fluxo_consulta] Autorizacao falhou: {e2}", flush=True)
 
-    # Aguarda 30s após autorização para a API processar
+    # Aguarda 30s após autorização para a API processar (antes da 1ª tentativa)
     if dados is None or dados.get("status") != "SUCCESS":
-        print(f"[executar_fluxo_consulta] Aguardando 30s apos autorizacao...", flush=True)
+        print(f"[executar_fluxo_consulta] Aguardando 30s apos autorizacao (antes da 1a tentativa)...", flush=True)
         time.sleep(30)
 
-    # Tenta buscar até 3 vezes (intervalo de 30s entre cada)
+    # Tenta buscar até 3 vezes (50s antes da 2ª e 3ª tentativa)
+    _esperas = [50, 50]  # espera antes da 2ª e 3ª tentativa
     if dados is None or dados.get("status") != "SUCCESS":
         dados = None
         for tentativa in range(3):
@@ -206,7 +207,9 @@ def executar_fluxo_consulta(cpf: str, nome: str, email: str, celular: str, data_
             except Exception as e:
                 print(f"[executar_fluxo_consulta] Tentativa {tentativa+1}/3: erro={e}", flush=True)
             if tentativa < 2:
-                time.sleep(30)
+                espera = _esperas[tentativa]
+                print(f"[executar_fluxo_consulta] Aguardando {espera}s antes da {tentativa+2}a tentativa...", flush=True)
+                time.sleep(espera)
 
     # Se ainda não é SUCCESS, sinaliza para o agente avisar o cliente e aguardar 50s
     status_apos3 = dados.get("status") if dados else "desconhecido"

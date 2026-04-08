@@ -653,7 +653,7 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
     if state == State.GREETING:
         # Botão "Ver detalhes" → pula saudação e vai direto ao CPF
         if text.strip().lower() == "ver detalhes":
-            return "Para simular, preciso do seu CPF. Pode me informar?", State.WAITING_CPF, {}
+            return "Por gentileza informe o numero do seu CPF, para que possa simular.", State.WAITING_CPF, {}
         return GREETING_MESSAGE, State.WAITING_SIMULATION_CONFIRM, {}
 
     # ── WAITING_SIMULATION_CONFIRM ────────────────────────────────────────────
@@ -661,7 +661,7 @@ async def _process(state: State, data: dict, text: str, user: dict, history: lis
         t = text.lower().strip()
         palavras = set(re.findall(r"[a-záéíóúâêîôûãõàèìòùç]+", t))
         if t == "1" or bool(palavras & {"sim", "ok", "quero", "pode", "vamos", "claro", "yes"}):
-            return "Ótimo! Para simular, preciso do seu CPF. Pode me informar?", State.WAITING_CPF, {}
+            return "Por gentileza informe o numero do seu CPF, para que possa simular.", State.WAITING_CPF, {}
         if t == "2" or bool(palavras & {"nao", "não", "agora", "depois"}):
             return "Tudo bem! Se precisar, é só me chamar. Tenha um ótimo dia! 😊", State.GREETING, {}
         reply = await asyncio.to_thread(_ask_gpt, state, data, user, history,
@@ -1375,9 +1375,9 @@ async def _rodar_simulacao_padrao(user: dict, data: dict) -> tuple:
             print(f"[_rodar_simulacao_padrao] V8 rejeitou (status={e.status}), acionando Facta...", flush=True)
             return await _iniciar_fluxo_facta(user, data)
         except ConsultaEmAnaliseError as e:
-            # Consulta ainda em análise após todas as tentativas → última espera de 50s
-            print(f"[_rodar_simulacao_padrao] Consulta em analise apos todas tentativas, aguardando 50s...", flush=True)
-            await asyncio.sleep(50)
+            # Consulta ainda em análise após todas as tentativas → última espera de 40s (4ª tentativa)
+            print(f"[_rodar_simulacao_padrao] Consulta em analise apos todas tentativas, aguardando 40s (4a tentativa)...", flush=True)
+            await asyncio.sleep(40)
             dados_final = await asyncio.to_thread(buscar_dados_consulta, e.consult_id)
             status_final = dados_final.get("status", "")
             if status_final != "SUCCESS":
