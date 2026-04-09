@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Painel CLT — Crédito Consignado</title>
+<style>
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#273449;--border:#334155;
+  --primary:#3b82f6;--primary-dark:#2563eb;--green:#10b981;--red:#ef4444;
+  --yellow:#f59e0b;--text:#f1f5f9;--muted:#94a3b8;--radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  border-radius:6px;padding:10px 12px;font-size:14px;width:100%;outline:none;transition:.2s}
+input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+select option{background:var(--surface)}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.btn{cursor:pointer;border:none;border-radius:8px;padding:11px 22px;font-size:14px;font-weight:600;transition:.2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--primary);color:var(--primary)}
+.btn-success{background:var(--green);color:#fff}.btn-success:hover{filter:brightness(1.1)}
+.btn-danger{background:var(--red);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:24px}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.tag-green{background:rgba(16,185,129,.15);color:var(--green)}
+.tag-blue{background:rgba(59,130,246,.15);color:var(--primary)}
+.tag-yellow{background:rgba(245,158,11,.15);color:var(--yellow)}
+.tag-red{background:rgba(239,68,68,.15);color:var(--red)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+@media(max-width:640px){.grid2,.grid3{grid-template-columns:1fr}}
+
+/* LOGIN */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.login-box{width:100%;max-width:380px}
+.login-logo{text-align:center;margin-bottom:32px}
+.login-logo h1{font-size:24px;font-weight:700;color:var(--primary)}
+.login-logo p{color:var(--muted);font-size:13px;margin-top:4px}
+.login-form .field{margin-bottom:16px}
+.login-err{color:var(--red);font-size:13px;margin-top:8px;display:none}
+
+/* APP LAYOUT */
+#app{display:none;min-height:100vh;flex-direction:column}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:58px}
+.topbar-brand{display:flex;align-items:center;gap:10px}
+.topbar-brand .logo{background:var(--primary);color:#fff;width:32px;height:32px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.topbar-brand span{font-weight:600;font-size:15px}
+.app-body{display:flex;flex:1}
+
+/* SIDEBAR */
+#sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);
+  padding:20px 12px;flex-shrink:0;display:flex;flex-direction:column;gap:4px}
+.step-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;
+  cursor:pointer;transition:.15s;font-size:13px;color:var(--muted)}
+.step-item.active{background:rgba(59,130,246,.12);color:var(--primary);font-weight:600}
+.step-item.done{color:var(--green)}
+.step-item.locked{pointer-events:none;opacity:.4}
+.step-num{width:22px;height:22px;border-radius:50%;border:1.5px solid currentColor;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.step-item.done .step-num{background:var(--green);border-color:var(--green);color:#fff}
+.step-item.active .step-num{background:var(--primary);border-color:var(--primary);color:#fff}
+
+/* MAIN CONTENT */
+#main-content{flex:1;overflow-y:auto;padding:28px}
+.page{display:none;animation:fadeIn .2s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.page-title{font-size:20px;font-weight:700;margin-bottom:4px}
+.page-sub{color:var(--muted);font-size:13px;margin-bottom:24px}
+.form-row{margin-bottom:16px}
+.actions{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap}
+
+/* LOADING */
+.loader{display:flex;flex-direction:column;align-items:center;gap:16px;padding:40px 20px}
+.spinner{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--primary);
+  border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-text{color:var(--muted);font-size:13px;text-align:center}
+
+/* CONSULTA RESULT */
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+.info-card{background:var(--surface2);border-radius:8px;padding:14px}
+.info-card .ic-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.info-card .ic-value{font-size:16px;font-weight:600}
+
+/* PARCELAS */
+.parcelas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:20px}
+.parcela-card{background:var(--surface2);border:2px solid var(--border);border-radius:10px;
+  padding:16px;cursor:pointer;transition:.2s;text-align:center}
+.parcela-card:hover{border-color:var(--primary)}
+.parcela-card.selected{border-color:var(--primary);background:rgba(59,130,246,.08)}
+.parcela-card .pc-num{font-size:28px;font-weight:700;color:var(--primary)}
+.parcela-card .pc-label{font-size:11px;color:var(--muted);margin:2px 0 8px}
+.parcela-card .pc-value{font-size:16px;font-weight:600}
+
+/* SIMULACAO RESULT */
+.sim-summary{background:var(--surface2);border-radius:10px;padding:20px;margin-bottom:20px}
+.sim-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;
+  border-bottom:1px solid var(--border);font-size:14px}
+.sim-row:last-child{border-bottom:none}
+.sim-row .sr-label{color:var(--muted)}
+.sim-row .sr-value{font-weight:600}
+.sim-big{font-size:32px;font-weight:700;color:var(--green);text-align:center;margin:16px 0 4px}
+.sim-big-label{text-align:center;color:var(--muted);font-size:13px;margin-bottom:16px}
+
+/* PROPOSTA RESULT */
+.proposta-success{text-align:center;padding:40px 20px}
+.proposta-success .check-icon{font-size:56px;color:var(--green);margin-bottom:16px}
+.proposta-link{display:block;background:rgba(16,185,129,.1);border:1px solid var(--green);
+  border-radius:8px;padding:14px;word-break:break-all;color:var(--green);text-decoration:none;
+  font-size:13px;margin:16px 0;text-align:center}
+.proposta-link:hover{background:rgba(16,185,129,.2)}
+
+/* ALERT */
+.alert{border-radius:8px;padding:12px 16px;font-size:13px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start}
+.alert-err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
+.alert-info{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);color:#93c5fd}
+.alert-warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:#fcd34d}
+
+/* NOVA OPERAÇÃO btn */
+#btn-nova-op{position:fixed;bottom:24px;right:24px;z-index:99;display:none}
+
+/* PROGRESS BAR */
+.progress-bar{height:3px;background:var(--border);border-radius:2px;margin-bottom:24px;overflow:hidden}
+.progress-fill{height:100%;background:var(--primary);transition:width .4s ease;border-radius:2px}
+
+/* scroll */
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ LOGIN ═══════════════════ -->
+<div id="login-screen">
+  <div class="login-box card">
+    <div class="login-logo">
+      <div style="font-size:36px;margin-bottom:8px">💳</div>
+      <h1>Painel CLT</h1>
+      <p>Crédito Consignado Privado</p>
+    </div>
+    <div class="login-form">
+      <div class="field">
+        <label>Usuário</label>
+        <input id="l-user" type="text" placeholder="admin" autocomplete="username"/>
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">
+        Entrar
+      </button>
+      <p class="login-err" id="l-err">Usuário ou senha incorretos.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ APP ═══════════════════ -->
+<div id="app">
+  <!-- topbar -->
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="logo">CLT</div>
+      <span>Painel de Operações</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span id="topbar-user" style="color:var(--muted);font-size:13px"></span>
+      <button class="btn btn-secondary" style="padding:6px 14px;font-size:12px" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <!-- sidebar -->
+    <div id="sidebar">
+      <div class="step-item active" id="si-1" onclick="goStep(1)">
+        <div class="step-num">1</div><span>Dados do Cliente</span>
+      </div>
+      <div class="step-item locked" id="si-2">
+        <div class="step-num">2</div><span>Consulta de Margem</span>
+      </div>
+      <div class="step-item locked" id="si-3">
+        <div class="step-num">3</div><span>Simulação</span>
+      </div>
+      <div class="step-item locked" id="si-4">
+        <div class="step-num">4</div><span>Dados Pessoais</span>
+      </div>
+      <div class="step-item locked" id="si-5">
+        <div class="step-num">5</div><span>Endereço</span>
+      </div>
+      <div class="step-item locked" id="si-6">
+        <div class="step-num">6</div><span>Dados Bancários</span>
+      </div>
+      <div class="step-item locked" id="si-7">
+        <div class="step-num">7</div><span>Gerar Proposta</span>
+      </div>
+    </div>
+
+    <!-- main content -->
+    <div id="main-content">
+      <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:14%"></div></div>
+
+      <!-- ── STEP 1: DADOS DO CLIENTE ── -->
+      <div class="page active" id="page-1">
+        <p class="page-title">Dados do Cliente</p>
+        <p class="page-sub">Preencha o CPF para buscar dados automaticamente ou preencha manualmente.</p>
+
+        <div class="card">
+          <div class="form-row">
+            <label>CPF *</label>
+            <div style="display:flex;gap:8px">
+              <input id="f-cpf" type="text" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)" style="flex:1"/>
+              <button class="btn btn-secondary" onclick="buscarDadosCliente()" style="white-space:nowrap">Buscar dados</button>
+            </div>
+          </div>
+          <div class="grid2">
+            <div class="form-row">
+              <label>Nome Completo *</label>
+              <input id="f-nome" type="text" placeholder="Nome completo"/>
+            </div>
+            <div class="form-row">
+              <label>E-mail *</label>
+              <input id="f-email" type="email" placeholder="email@exemplo.com"/>
+            </div>
+          </div>
+          <div class="grid2">
+            <div class="form-row">
+              <label>Celular (DDD + número) *</label>
+              <input id="f-celular" type="text" placeholder="35999887766" maxlength="11" oninput="this.value=this.value.replace(/\D/g,'')"/>
+            </div>
+            <div class="form-row">
+              <label>Data de Nascimento *</label>
+              <input id="f-nasc" type="date"/>
+            </div>
+          </div>
+          <div class="form-row" style="max-width:200px">
+            <label>Gênero *</label>
+            <select id="f-genero">
+              <option value="">Selecione</option>
+              <option value="M">Masculino</option>
+              <option value="F">Feminino</option>
+            </select>
+          </div>
+          <div id="step1-alert" style="display:none"></div>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="submitStep1()">Consultar Margem →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 2: CONSULTA DE MARGEM ── -->
+      <div class="page" id="page-2">
+        <p class="page-title">Consulta de Margem</p>
+        <p class="page-sub">Aguarde enquanto consultamos a margem disponível do cliente.</p>
+
+        <div class="card" id="s2-loading">
+          <div class="loader">
+            <div class="spinner"></div>
+            <div>
+              <div style="font-weight:600;text-align:center;margin-bottom:6px">Processando consulta...</div>
+              <div class="loader-text" id="s2-step-text">Iniciando...</div>
+            </div>
+            <div class="alert alert-warn" style="margin:0;max-width:380px">
+              ⏱️ Este processo pode levar até <strong>3 minutos</strong>. Não feche a janela.
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="s2-result" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+            <div>
+              <div style="font-size:18px;font-weight:700" id="s2-nome-cliente"></div>
+              <div style="color:var(--muted);font-size:13px" id="s2-cpf-display"></div>
+            </div>
+            <span class="tag tag-green" id="s2-status-tag">✓ Aprovado</span>
+          </div>
+          <div class="info-grid" id="s2-info-grid"></div>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="goStep(3)">Ver Simulação →</button>
+            <button class="btn btn-secondary" onclick="goStep(1)">← Voltar</button>
+          </div>
+        </div>
+
+        <div class="card" id="s2-error" style="display:none">
+          <div class="alert alert-err" id="s2-err-msg"></div>
+          <div class="actions">
+            <button class="btn btn-secondary" onclick="goStep(1)">← Tentar Novamente</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 3: SIMULAÇÃO ── -->
+      <div class="page" id="page-3">
+        <p class="page-title">Simulação de Parcelas</p>
+        <p class="page-sub">Selecione a opção de parcelamento desejada.</p>
+
+        <div class="card" id="s3-loading" style="display:none">
+          <div class="loader"><div class="spinner"></div><div class="loader-text">Carregando opções...</div></div>
+        </div>
+
+        <div id="s3-content">
+          <div id="s3-alert" style="display:none"></div>
+          <div class="parcelas-grid" id="s3-parcelas"></div>
+
+          <div class="card" id="s3-sim-result" style="display:none">
+            <div class="sim-big" id="s3-valor-liberar"></div>
+            <div class="sim-big-label">Valor a Receber (líquido)</div>
+            <div class="sim-summary" id="s3-sim-rows"></div>
+          </div>
+
+          <div id="s3-sim-alert" style="display:none"></div>
+          <div class="actions" id="s3-actions" style="display:none">
+            <button class="btn btn-primary" onclick="goStep(4)">Continuar →</button>
+            <button class="btn btn-secondary" onclick="goStep(2)">← Voltar</button>
+          </div>
+          <div class="actions" id="s3-actions-select" style="margin-top:8px">
+            <button class="btn btn-secondary" onclick="goStep(2)">← Voltar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 4: DADOS PESSOAIS ── -->
+      <div class="page" id="page-4">
+        <p class="page-title">Dados Pessoais</p>
+        <p class="page-sub">Preencha os dados do documento e informações adicionais.</p>
+
+        <div class="card">
+          <div class="grid3">
+            <div class="form-row">
+              <label>RG *</label>
+              <input id="f-rg" type="text" placeholder="MG-12.345.678"/>
+            </div>
+            <div class="form-row">
+              <label>Data de Expedição do RG *</label>
+              <input id="f-rg-data" type="date"/>
+            </div>
+            <div class="form-row">
+              <label>Órgão Emissor</label>
+              <input id="f-rg-orgao" type="text" placeholder="SSP" value="SSP"/>
+            </div>
+          </div>
+          <div class="grid2">
+            <div class="form-row">
+              <label>Nome da Mãe *</label>
+              <input id="f-mae" type="text" placeholder="Nome completo da mãe"/>
+            </div>
+            <div class="form-row">
+              <label>Estado Civil *</label>
+              <select id="f-civil">
+                <option value="">Selecione</option>
+                <option value="single">Solteiro(a)</option>
+                <option value="married">Casado(a)</option>
+                <option value="divorced">Divorciado(a)</option>
+                <option value="widowed">Viúvo(a)</option>
+                <option value="stable_union">União Estável</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row" style="max-width:300px">
+            <label>Nacionalidade</label>
+            <input id="f-nac" type="text" value="Brasileiro" placeholder="Brasileiro"/>
+          </div>
+          <div id="step4-alert" style="display:none"></div>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="submitStep4()">Continuar →</button>
+            <button class="btn btn-secondary" onclick="goStep(3)">← Voltar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 5: ENDEREÇO ── -->
+      <div class="page" id="page-5">
+        <p class="page-title">Endereço</p>
+        <p class="page-sub">Digite o CEP para preenchimento automático via ViaCEP.</p>
+
+        <div class="card">
+          <div class="grid2">
+            <div class="form-row">
+              <label>CEP *</label>
+              <div style="display:flex;gap:8px">
+                <input id="f-cep" type="text" placeholder="00000-000" maxlength="9" oninput="maskCEP(this)" style="flex:1"/>
+                <button class="btn btn-secondary" onclick="buscarCEP()" style="white-space:nowrap">Buscar</button>
+              </div>
+            </div>
+            <div class="form-row">
+              <label>Estado *</label>
+              <input id="f-estado" type="text" placeholder="MG" maxlength="2"/>
+            </div>
+          </div>
+          <div class="grid2">
+            <div class="form-row">
+              <label>Rua / Logradouro *</label>
+              <input id="f-rua" type="text" placeholder="Rua das Flores"/>
+            </div>
+            <div class="form-row">
+              <label>Bairro *</label>
+              <input id="f-bairro" type="text" placeholder="Centro"/>
+            </div>
+          </div>
+          <div class="grid3">
+            <div class="form-row">
+              <label>Número *</label>
+              <input id="f-num" type="text" placeholder="123"/>
+            </div>
+            <div class="form-row">
+              <label>Complemento</label>
+              <input id="f-compl" type="text" placeholder="Apto 101"/>
+            </div>
+            <div class="form-row">
+              <label>Cidade *</label>
+              <input id="f-cidade" type="text" placeholder="Belo Horizonte"/>
+            </div>
+          </div>
+          <div id="step5-alert" style="display:none"></div>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="submitStep5()">Continuar →</button>
+            <button class="btn btn-secondary" onclick="goStep(4)">← Voltar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 6: DADOS BANCÁRIOS ── -->
+      <div class="page" id="page-6">
+        <p class="page-title">Dados Bancários</p>
+        <p class="page-sub">Informe a chave PIX para recebimento do valor do empréstimo.</p>
+
+        <div class="card">
+          <div class="grid2">
+            <div class="form-row">
+              <label>Tipo de Chave PIX *</label>
+              <select id="f-pix-tipo" onchange="updatePixPlaceholder()">
+                <option value="">Selecione</option>
+                <option value="1">CPF</option>
+                <option value="2">Telefone</option>
+                <option value="3">E-mail</option>
+                <option value="4">Chave Aleatória</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Chave PIX *</label>
+              <input id="f-pix-chave" type="text" placeholder="Selecione o tipo acima"/>
+            </div>
+          </div>
+          <div class="alert alert-info">
+            ℹ️ O valor será transferido via PIX após a assinatura do contrato.
+          </div>
+          <div id="step6-alert" style="display:none"></div>
+          <div class="actions">
+            <button class="btn btn-primary" onclick="submitStep6()">Revisar Proposta →</button>
+            <button class="btn btn-secondary" onclick="goStep(5)">← Voltar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 7: PROPOSTA ── -->
+      <div class="page" id="page-7">
+        <p class="page-title">Gerar Proposta</p>
+        <p class="page-sub">Revise os dados e gere a proposta para assinatura.</p>
+
+        <div class="card" id="s7-review">
+          <div style="font-weight:600;margin-bottom:16px;color:var(--primary)">Resumo da Operação</div>
+          <div id="s7-summary-rows"></div>
+
+          <div style="font-weight:600;margin:20px 0 12px;color:var(--primary)">Dados do Cliente</div>
+          <div id="s7-client-rows"></div>
+
+          <div id="step7-alert" style="display:none"></div>
+          <div class="actions">
+            <button class="btn btn-success" id="btn-gerar" onclick="gerarProposta()">
+              ✓ Gerar Proposta
+            </button>
+            <button class="btn btn-secondary" onclick="goStep(6)">← Voltar</button>
+          </div>
+        </div>
+
+        <div class="card" id="s7-loading" style="display:none">
+          <div class="loader">
+            <div class="spinner"></div>
+            <div class="loader-text">Gerando proposta...</div>
+          </div>
+        </div>
+
+        <div class="card proposta-success" id="s7-success" style="display:none">
+          <div class="check-icon">✅</div>
+          <div style="font-size:22px;font-weight:700;margin-bottom:8px">Proposta Gerada!</div>
+          <div style="color:var(--muted);margin-bottom:4px">ID da Operação: <span id="s7-op-id" style="color:var(--text)"></span></div>
+          <div style="color:var(--muted);font-size:13px;margin-bottom:16px">Envie o link abaixo para o cliente assinar o contrato:</div>
+          <a id="s7-link" href="#" target="_blank" class="proposta-link">🔗 Link de Formalização</a>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px">
+            <button class="btn btn-primary" onclick="copiarLink()">📋 Copiar Link</button>
+            <button class="btn btn-secondary" onclick="novaOperacao()">+ Nova Operação</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main-content -->
+  </div><!-- /app-body -->
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════ STATE ═══════════════════════
+const S = {
+  step: 1,
+  maxStep: 1,
+  cpf:'', nome:'', email:'', celular:'', dataNasc:'', genero:'',
+  taskId: null,
+  consulta: null,     // dados da consulta bem-sucedida
+  installments: [],
+  selectedInstallment: null,
+  simulacao: null,
+  rg:'', rgData:'', rgOrgao:'', civil:'', mae:'', nac:'',
+  cep:'', rua:'', num:'', compl:'', bairro:'', cidade:'', estado:'',
+  pixTipo:'', pixChave:'',
+  proposta: null,
+};
+let pollTimer = null;
+
+// ═══════════════════════ LOGIN ═══════════════════════
+async function doLogin() {
+  const u = document.getElementById('l-user').value.trim();
+  const p = document.getElementById('l-pass').value;
+  const err = document.getElementById('l-err');
+  err.style.display = 'none';
+  try {
+    const r = await fetch('/api/auth/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username:u, password:p})
+    });
+    if (r.ok) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      document.getElementById('topbar-user').textContent = u;
+    } else {
+      err.style.display = 'block';
+    }
+  } catch(e) { err.textContent = 'Erro de conexão.'; err.style.display='block'; }
+}
+
+document.getElementById('l-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('l-user').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+function doLogout() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  novaOperacao(false);
+}
+
+// ═══════════════════════ NAVIGATION ═══════════════════════
+const STEPS = 7;
+function goStep(n) {
+  if (n > S.maxStep) return;
+  S.step = n;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(`page-${n}`).classList.add('active');
+
+  document.querySelectorAll('.step-item').forEach((el, i) => {
+    el.classList.remove('active','done','locked');
+    const sn = i + 1;
+    if (sn < n) el.classList.add('done');
+    else if (sn === n) el.classList.add('active');
+    else if (sn <= S.maxStep) el.classList.remove('locked');
+    else el.classList.add('locked');
+  });
+
+  const pct = Math.round((n / STEPS) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+
+  if (n === 3 && S.consulta && S.installments.length === 0) loadParcelas();
+  if (n === 7) renderReview();
+}
+
+// ═══════════════════════ MASKS ═══════════════════════
+function maskCPF(el) {
+  let v = el.value.replace(/\D/g,'').slice(0,11);
+  v = v.replace(/(\d{3})(\d)/,'$1.$2');
+  v = v.replace(/(\d{3})(\d)/,'$1.$2');
+  v = v.replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+  el.value = v;
+}
+function maskCEP(el) {
+  let v = el.value.replace(/\D/g,'').slice(0,8);
+  v = v.replace(/(\d{5})(\d)/,'$1-$2');
+  el.value = v;
+}
+function fmtBRL(v) {
+  return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const [y,m,dd] = d.split('-');
+  return `${dd}/${m}/${y}`;
+}
+
+// ═══════════════════════ STEP 1 ═══════════════════════
+async function buscarDadosCliente() {
+  const cpf = document.getElementById('f-cpf').value.replace(/\D/g,'');
+  if (cpf.length !== 11) { showAlert('step1-alert','warn','Digite um CPF válido (11 dígitos).'); return; }
+  try {
+    const r = await fetch(`/api/v8/dados-cliente/${cpf}`);
+    const d = await r.json();
+    if (d.name) document.getElementById('f-nome').value = d.name;
+    if (d.email) document.getElementById('f-email').value = d.email;
+    if (d.birthDate) document.getElementById('f-nasc').value = d.birthDate.split('T')[0];
+    if (d.gender) document.getElementById('f-genero').value = d.gender;
+    if (d.phoneRegionCode && d.phoneNumber)
+      document.getElementById('f-celular').value = d.phoneRegionCode + d.phoneNumber;
+    showAlert('step1-alert','info','Dados preenchidos automaticamente. Revise e confirme.');
+  } catch(e) {
+    showAlert('step1-alert','info','Não foi possível buscar dados automáticos. Preencha manualmente.');
+  }
+}
+
+async function submitStep1() {
+  const cpf    = document.getElementById('f-cpf').value.replace(/\D/g,'');
+  const nome   = document.getElementById('f-nome').value.trim();
+  const email  = document.getElementById('f-email').value.trim();
+  const cel    = document.getElementById('f-celular').value.replace(/\D/g,'');
+  const nasc   = document.getElementById('f-nasc').value;
+  const gen    = document.getElementById('f-genero').value;
+
+  if (!cpf || cpf.length !== 11) { showAlert('step1-alert','err','CPF inválido.'); return; }
+  if (!nome) { showAlert('step1-alert','err','Nome é obrigatório.'); return; }
+  if (!email || !email.includes('@')) { showAlert('step1-alert','err','E-mail inválido.'); return; }
+  if (!cel || cel.length < 10) { showAlert('step1-alert','err','Celular inválido. Use DDD + número.'); return; }
+  if (!nasc) { showAlert('step1-alert','err','Data de nascimento é obrigatória.'); return; }
+  if (!gen) { showAlert('step1-alert','err','Selecione o gênero.'); return; }
+
+  S.cpf = cpf; S.nome = nome; S.email = email;
+  S.celular = cel; S.dataNasc = nasc; S.genero = gen;
+
+  S.maxStep = Math.max(S.maxStep, 2);
+  goStep(2);
+  startConsulta();
+}
+
+// ═══════════════════════ STEP 2 — CONSULTA ═══════════════════════
+async function startConsulta() {
+  document.getElementById('s2-loading').style.display = 'block';
+  document.getElementById('s2-result').style.display = 'none';
+  document.getElementById('s2-error').style.display = 'none';
+  S.consulta = null;
+  S.installments = [];
+  S.simulacao = null;
+  S.taskId = null;
+
+  try {
+    const r = await fetch('/api/v8/consultar', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        cpf: S.cpf, nome: S.nome, email: S.email,
+        celular: S.celular, data_nasc: S.dataNasc, genero: S.genero
+      })
+    });
+    const d = await r.json();
+    S.taskId = d.task_id;
+    pollConsulta();
+  } catch(e) {
+    showConsultaError('Falha ao iniciar consulta: ' + e.message);
+  }
+}
+
+function pollConsulta() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    if (!S.taskId) return;
+    try {
+      const r = await fetch(`/api/v8/consulta/${S.taskId}`);
+      const d = await r.json();
+      document.getElementById('s2-step-text').textContent = d.step || '...';
+
+      if (d.status === 'success') {
+        clearInterval(pollTimer);
+        S.consulta = d.data;
+        S.maxStep = Math.max(S.maxStep, 3);
+        renderConsultaResult();
+      } else if (d.status === 'error') {
+        clearInterval(pollTimer);
+        showConsultaError(d.error || 'Erro ao processar consulta.');
+      }
+    } catch(e) {}
+  }, 3000);
+}
+
+function renderConsultaResult() {
+  document.getElementById('s2-loading').style.display = 'none';
+  document.getElementById('s2-result').style.display = 'block';
+  const c = S.consulta;
+  document.getElementById('s2-nome-cliente').textContent = S.nome;
+  document.getElementById('s2-cpf-display').textContent = formatCPF(S.cpf);
+
+  const grid = document.getElementById('s2-info-grid');
+  grid.innerHTML = `
+    ${infoCard('Margem Disponível', fmtBRL(c.margem_disponivel), 'var(--green)')}
+    ${infoCard('Empregador', c.employer_name || '—')}
+    ${infoCard('Matrícula', c.registration_number || '—')}
+    ${infoCard('Admissão', fmtDate(c.admission_date))}
+    ${infoCard('Parcela Sugerida', fmtBRL(c.recommended_installment_value))}
+    ${infoCard('Prazo Sugerido', (c.recommended_installment_number || '—') + ' meses')}
+  `;
+}
+
+function showConsultaError(msg) {
+  document.getElementById('s2-loading').style.display = 'none';
+  document.getElementById('s2-error').style.display = 'block';
+  document.getElementById('s2-err-msg').textContent = '⚠️ ' + msg;
+}
+
+function infoCard(label, value, color) {
+  const col = color ? `color:${color}` : '';
+  return `<div class="info-card"><div class="ic-label">${label}</div><div class="ic-value" style="${col}">${value}</div></div>`;
+}
+
+// ═══════════════════════ STEP 3 — SIMULAÇÃO ═══════════════════════
+async function loadParcelas() {
+  document.getElementById('s3-loading').style.display = 'block';
+  document.getElementById('s3-content').style.display = 'none';
+  try {
+    const r = await fetch('/api/v8/parcelas', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({consult_id: S.consulta.consult_id})
+    });
+    const d = await r.json();
+    S.installments = d.installments || [];
+    renderParcelas();
+  } catch(e) {
+    S.installments = [];
+    renderParcelas();
+    showAlert('s3-alert','err','Erro ao carregar parcelas: ' + e.message);
+  } finally {
+    document.getElementById('s3-loading').style.display = 'none';
+    document.getElementById('s3-content').style.display = 'block';
+  }
+}
+
+function renderParcelas() {
+  const grid = document.getElementById('s3-parcelas');
+  if (!S.installments.length) {
+    grid.innerHTML = '<p style="color:var(--muted)">Nenhuma opção de parcela disponível.</p>';
+    return;
+  }
+  grid.innerHTML = S.installments.map(inst => `
+    <div class="parcela-card" id="pc-${inst.installmentNumbers}" onclick="selectParcela(${inst.installmentNumbers}, ${inst.installmentValue})">
+      <div class="pc-num">${inst.installmentNumbers}x</div>
+      <div class="pc-label">parcelas de</div>
+      <div class="pc-value">${fmtBRL(inst.installmentValue)}</div>
+    </div>
+  `).join('');
+}
+
+async function selectParcela(num, val) {
+  document.querySelectorAll('.parcela-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById(`pc-${num}`).classList.add('selected');
+  S.selectedInstallment = {installmentNumbers: num, installmentValue: val};
+
+  document.getElementById('s3-sim-result').style.display = 'none';
+  document.getElementById('s3-sim-alert').style.display = 'none';
+  document.getElementById('s3-actions').style.display = 'none';
+
+  try {
+    const r = await fetch('/api/v8/simular', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        consult_id: S.consulta.consult_id,
+        installment_face_value: val,
+        number_of_installments: num
+      })
+    });
+    if (!r.ok) { const t = await r.text(); throw new Error(t); }
+    S.simulacao = await r.json();
+    renderSimResult();
+    S.maxStep = Math.max(S.maxStep, 4);
+    document.getElementById('s3-actions').style.display = 'flex';
+    document.getElementById('s3-actions-select').style.display = 'none';
+  } catch(e) {
+    showAlert('s3-sim-alert','err','Erro na simulação: ' + e.message);
+  }
+}
+
+function renderSimResult() {
+  const s = S.simulacao;
+  document.getElementById('s3-sim-result').style.display = 'block';
+  document.getElementById('s3-valor-liberar').textContent = fmtBRL(s.disbursement_amount);
+  document.getElementById('s3-sim-rows').innerHTML = `
+    ${simRow('Valor da Operação', fmtBRL(s.operation_amount))}
+    ${simRow('Valor a Receber', fmtBRL(s.disbursement_amount), 'var(--green)')}
+    ${simRow('IOF', fmtBRL(s.iof_amount))}
+    ${simRow('Parcelas', s.number_of_installments + 'x de ' + fmtBRL(s.installment_value))}
+    ${simRow('Taxa Mensal', s.monthly_interest_rate + '%')}
+    ${simRow('1ª Parcela em', fmtDate(s.first_installment_date))}
+  `;
+}
+
+function simRow(label, value, color) {
+  const c = color ? `color:${color}` : '';
+  return `<div class="sim-row"><span class="sr-label">${label}</span><span class="sr-value" style="${c}">${value}</span></div>`;
+}
+
+// ═══════════════════════ STEP 4 — DADOS PESSOAIS ═══════════════════════
+function submitStep4() {
+  const rg    = document.getElementById('f-rg').value.trim();
+  const rgD   = document.getElementById('f-rg-data').value;
+  const rgO   = document.getElementById('f-rg-orgao').value.trim();
+  const mae   = document.getElementById('f-mae').value.trim();
+  const civil = document.getElementById('f-civil').value;
+  const nac   = document.getElementById('f-nac').value.trim();
+
+  if (!rg) { showAlert('step4-alert','err','RG é obrigatório.'); return; }
+  if (!rgD) { showAlert('step4-alert','err','Data de expedição é obrigatória.'); return; }
+  if (!mae) { showAlert('step4-alert','err','Nome da mãe é obrigatório.'); return; }
+  if (!civil) { showAlert('step4-alert','err','Estado civil é obrigatório.'); return; }
+
+  S.rg = rg; S.rgData = rgD; S.rgOrgao = rgO || 'SSP';
+  S.mae = mae; S.civil = civil; S.nac = nac || 'Brasileiro';
+
+  // Auto-preenche nome da mãe da consulta, se disponível
+  if (!mae && S.consulta?.mother_name) {
+    document.getElementById('f-mae').value = S.consulta.mother_name;
+    S.mae = S.consulta.mother_name;
+  }
+
+  S.maxStep = Math.max(S.maxStep, 5);
+  goStep(5);
+}
+
+// ═══════════════════════ STEP 5 — ENDEREÇO ═══════════════════════
+async function buscarCEP() {
+  const cep = document.getElementById('f-cep').value.replace(/\D/g,'');
+  if (cep.length !== 8) { showAlert('step5-alert','warn','CEP deve ter 8 dígitos.'); return; }
+  try {
+    const r = await fetch(`/api/viacep/${cep}`);
+    if (!r.ok) throw new Error('CEP não encontrado');
+    const d = await r.json();
+    if (d.erro) throw new Error('CEP inválido');
+    if (d.logradouro) document.getElementById('f-rua').value = d.logradouro;
+    if (d.bairro)     document.getElementById('f-bairro').value = d.bairro;
+    if (d.localidade) document.getElementById('f-cidade').value = d.localidade;
+    if (d.uf)         document.getElementById('f-estado').value = d.uf.toUpperCase();
+    document.getElementById('f-num').focus();
+    showAlert('step5-alert','info','Endereço preenchido automaticamente. Complete o número.');
+  } catch(e) {
+    showAlert('step5-alert','err','CEP não encontrado.');
+  }
+}
+
+document.getElementById('f-cep').addEventListener('keydown', e => {
+  if (e.key === 'Enter') buscarCEP();
+});
+
+function submitStep5() {
+  const cep    = document.getElementById('f-cep').value.replace(/\D/g,'');
+  const rua    = document.getElementById('f-rua').value.trim();
+  const num    = document.getElementById('f-num').value.trim();
+  const bairro = document.getElementById('f-bairro').value.trim();
+  const cidade = document.getElementById('f-cidade').value.trim();
+  const estado = document.getElementById('f-estado').value.trim();
+
+  if (!cep || cep.length !== 8) { showAlert('step5-alert','err','CEP inválido.'); return; }
+  if (!rua)    { showAlert('step5-alert','err','Rua é obrigatória.'); return; }
+  if (!num)    { showAlert('step5-alert','err','Número é obrigatório.'); return; }
+  if (!bairro) { showAlert('step5-alert','err','Bairro é obrigatório.'); return; }
+  if (!cidade) { showAlert('step5-alert','err','Cidade é obrigatória.'); return; }
+  if (!estado) { showAlert('step5-alert','err','Estado é obrigatório.'); return; }
+
+  S.cep = cep; S.rua = rua; S.num = num;
+  S.compl = document.getElementById('f-compl').value.trim();
+  S.bairro = bairro; S.cidade = cidade; S.estado = estado.toUpperCase();
+
+  S.maxStep = Math.max(S.maxStep, 6);
+  goStep(6);
+}
+
+// ═══════════════════════ STEP 6 — PIX ═══════════════════════
+function updatePixPlaceholder() {
+  const tipo = document.getElementById('f-pix-tipo').value;
+  const placeholders = {'1':'000.000.000-00','2':'35999887766','3':'email@exemplo.com','4':'chave-aleatória'};
+  document.getElementById('f-pix-chave').placeholder = placeholders[tipo] || '';
+  if (tipo === '1') document.getElementById('f-pix-chave').value = formatCPF(S.cpf);
+  else if (tipo === '3') document.getElementById('f-pix-chave').value = S.email;
+  else if (tipo === '2') document.getElementById('f-pix-chave').value = S.celular;
+  else document.getElementById('f-pix-chave').value = '';
+}
+
+function submitStep6() {
+  const tipo  = document.getElementById('f-pix-tipo').value;
+  const chave = document.getElementById('f-pix-chave').value.trim();
+  if (!tipo)  { showAlert('step6-alert','err','Selecione o tipo de chave PIX.'); return; }
+  if (!chave) { showAlert('step6-alert','err','Informe a chave PIX.'); return; }
+  S.pixTipo = tipo; S.pixChave = chave;
+  S.maxStep = Math.max(S.maxStep, 7);
+  goStep(7);
+}
+
+// ═══════════════════════ STEP 7 — PROPOSTA ═══════════════════════
+function renderReview() {
+  const s = S.simulacao;
+  const c = S.consulta;
+  document.getElementById('s7-summary-rows').innerHTML = `
+    ${reviewRow('Valor a Receber', fmtBRL(s?.disbursement_amount || 0), true)}
+    ${reviewRow('Parcelas', s ? `${s.number_of_installments}x de ${fmtBRL(s.installment_value)}` : '—')}
+    ${reviewRow('Taxa Mensal', (s?.monthly_interest_rate || '—') + '%')}
+    ${reviewRow('Empregador', c?.employer_name || '—')}
+    ${reviewRow('Matrícula', c?.registration_number || '—')}
+  `;
+  document.getElementById('s7-client-rows').innerHTML = `
+    ${reviewRow('Nome', S.nome)}
+    ${reviewRow('CPF', formatCPF(S.cpf))}
+    ${reviewRow('E-mail', S.email)}
+    ${reviewRow('Celular', S.celular)}
+    ${reviewRow('Nascimento', fmtDate(S.dataNasc))}
+    ${reviewRow('RG', S.rg + ' / ' + fmtDate(S.rgData) + ' / ' + S.rgOrgao)}
+    ${reviewRow('Mãe', S.mae)}
+    ${reviewRow('Estado Civil', S.civil)}
+    ${reviewRow('CEP', S.cep)}
+    ${reviewRow('Endereço', `${S.rua}, ${S.num}${S.compl ? ' / ' + S.compl : ''} — ${S.bairro}, ${S.cidade}/${S.estado}`)}
+    ${reviewRow('PIX', `Tipo ${S.pixTipo}: ${S.pixChave}`)}
+  `;
+}
+
+function reviewRow(label, value, highlight) {
+  const col = highlight ? 'color:var(--green);font-size:16px' : '';
+  return `<div class="sim-row"><span class="sr-label">${label}</span><span class="sr-value" style="${col}">${value}</span></div>`;
+}
+
+async function gerarProposta() {
+  document.getElementById('s7-review').style.display = 'none';
+  document.getElementById('s7-loading').style.display = 'block';
+
+  const body = {
+    simulation_id: S.simulacao.simulation_id,
+    name: S.nome, email: S.email, cpf: S.cpf,
+    phone_area: S.celular.slice(0,2), phone_number: S.celular.slice(2),
+    birth_date: S.dataNasc, mother_name: S.mae, gender: S.genero,
+    marital_status: S.civil, nationality: S.nac,
+    rg: S.rg, rg_date: S.rgData, rg_orgao: S.rgOrgao,
+    postal_code: S.cep, street: S.rua, number: S.num,
+    complement: S.compl, neighborhood: S.bairro,
+    city: S.cidade, state: S.estado,
+    pix_key_type: S.pixTipo, pix_key: S.pixChave,
+    employer_name: S.consulta.employer_name || '',
+    employer_document_number: S.consulta.employer_document_number || '',
+    registration_number: S.consulta.registration_number || '',
+  };
+
+  try {
+    const r = await fetch('/api/v8/proposta', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) {
+      const t = await r.text();
+      throw new Error(t);
+    }
+    const d = await r.json();
+    S.proposta = d;
+    document.getElementById('s7-loading').style.display = 'none';
+    document.getElementById('s7-success').style.display = 'block';
+    document.getElementById('s7-op-id').textContent = d.operation_id;
+    const link = document.getElementById('s7-link');
+    link.href = d.formalization_url;
+    link.textContent = '🔗 ' + d.formalization_url;
+  } catch(e) {
+    document.getElementById('s7-loading').style.display = 'none';
+    document.getElementById('s7-review').style.display = 'block';
+    showAlert('step7-alert','err','Erro ao gerar proposta: ' + e.message);
+  }
+}
+
+function copiarLink() {
+  if (S.proposta?.formalization_url) {
+    navigator.clipboard.writeText(S.proposta.formalization_url)
+      .then(() => alert('Link copiado!'))
+      .catch(() => prompt('Copie o link:', S.proposta.formalization_url));
+  }
+}
+
+// ═══════════════════════ NOVA OPERAÇÃO ═══════════════════════
+function novaOperacao(redirect = true) {
+  if (pollTimer) clearInterval(pollTimer);
+  Object.assign(S, {
+    step:1, maxStep:1,
+    cpf:'', nome:'', email:'', celular:'', dataNasc:'', genero:'',
+    taskId:null, consulta:null, installments:[], selectedInstallment:null, simulacao:null,
+    rg:'', rgData:'', rgOrgao:'', civil:'', mae:'', nac:'',
+    cep:'', rua:'', num:'', compl:'', bairro:'', cidade:'', estado:'',
+    pixTipo:'', pixChave:'', proposta:null
+  });
+  // Limpa campos
+  ['f-cpf','f-nome','f-email','f-celular','f-nasc','f-rg','f-rg-data',
+   'f-mae','f-cep','f-rua','f-num','f-compl','f-bairro','f-cidade','f-estado',
+   'f-pix-chave'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('f-genero').value = '';
+  document.getElementById('f-civil').value = '';
+  document.getElementById('f-pix-tipo').value = '';
+  document.getElementById('f-rg-orgao').value = 'SSP';
+  document.getElementById('f-nac').value = 'Brasileiro';
+  document.getElementById('s7-review').style.display = 'block';
+  document.getElementById('s7-loading').style.display = 'none';
+  document.getElementById('s7-success').style.display = 'none';
+  document.getElementById('s3-sim-result').style.display = 'none';
+  document.getElementById('s3-actions').style.display = 'none';
+  document.getElementById('s3-actions-select').style.display = 'flex';
+  document.getElementById('s3-parcelas').innerHTML = '';
+  if (redirect) goStep(1);
+}
+
+// ═══════════════════════ UTILS ═══════════════════════
+function showAlert(containerId, type, msg) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const cls = {err:'alert-err', info:'alert-info', warn:'alert-warn'}[type] || 'alert-info';
+  el.style.display = 'block';
+  el.innerHTML = `<div class="alert ${cls}">${msg}</div>`;
+  setTimeout(() => { el.style.display = 'none'; }, 6000);
+}
+
+function formatCPF(cpf) {
+  const c = cpf.replace(/\D/g,'');
+  return c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
+}
+
+// Auto-preenche nome da mãe quando entra no step 4
+document.getElementById('si-4')?.addEventListener('click', () => {
+  if (S.consulta?.mother_name && !document.getElementById('f-mae').value)
+    document.getElementById('f-mae').value = S.consulta.mother_name;
+});
+</script>
+</body>
+</html>
