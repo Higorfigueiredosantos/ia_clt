@@ -61,14 +61,30 @@ def _buscar_dados_consulta(consult_id: str) -> dict:
     r.raise_for_status()
     return r.json()
 
-def _gerar_consulta(cpf, nome, email, celular, data_nasc, genero) -> str:
-    cpf_limpo = "".join(c for c in cpf if c.isdigit()).zfill(11)
+def _cpf_limpo(cpf: str) -> str:
+    return "".join(c for c in cpf if c.isdigit()).zfill(11)
+
+def _cpf_da_consulta(dados: dict) -> str:
+    """Extrai CPF dos dados da consulta, testando vários campos possíveis."""
+    raw = (
+        dados.get("borrowerDocumentNumber") or
+        dados.get("documentNumber") or
+        dados.get("cpf") or
+        (dados.get("borrower") or {}).get("documentNumber") or
+        (dados.get("borrower") or {}).get("cpf") or ""
+    )
+    return "".join(c for c in str(raw) if c.isdigit()).zfill(11)
+
+def _gerar_consulta_nova(cpf, nome, email, celular, data_nasc, genero) -> str:
+    """Cria SEMPRE uma nova consulta. Retorna consult_id."""
+    cpf_ok = _cpf_limpo(cpf)
     area_code = celular[:2]
     number    = celular[2:]
     if len(number) == 8:
         number = "9" + number
+
     payload = {
-        "borrowerDocumentNumber": cpf_limpo,
+        "borrowerDocumentNumber": cpf_ok,
         "signerName": nome,
         "signerEmail": email,
         "signerPhone": {"countryCode": "55", "areaCode": area_code, "phoneNumber": number},
@@ -77,90 +93,166 @@ def _gerar_consulta(cpf, nome, email, celular, data_nasc, genero) -> str:
     }
     r = requests.post(f"{V8_BASE_URL}/private-consignment/consult",
                       headers=v8_headers(), json=payload, timeout=30)
-    if not r.ok:
-        body = {}
-        try: body = r.json()
-        except: pass
-        error_type = body.get("type", "")
-        consult_id = (body.get("consultId") or body.get("consult_id") or
-                      body.get("id") or (body.get("data") or {}).get("consultId") or "")
-        if consult_id:
-            return consult_id
-        # tenta buscar consulta ativa
-        existing = _buscar_consulta_ativa(cpf_limpo)
-        if existing:
-            return existing
-    r.raise_for_status()
-    return r.json()["id"]
 
-def _buscar_consulta_ativa(cpf_limpo: str) -> Optional[str]:
-    r = requests.get(f"{V8_BASE_URL}/private-consignment/consult",
-                     headers=v8_headers(),
-                     params={"limit": 10, "page": 1, "documentNumber": cpf_limpo},
-                     timeout=30)
+    if r.ok:
+        return r.json()["id"]
+
+    # Trata erro de consulta já existente
+    body = {}
+    try: body = r.json()
+    except: pass
+
+    print(f"[gerar_consulta] erro {r.status_code}: {body}", flush=True)
+
+    # Tenta extrair consult_id da resposta de erro
+    consult_id_erro = (
+        body.get("consultId") or body.get("consult_id") or
+        body.get("id") or (body.get("data") or {}).get("consultId") or
+        (body.get("data") or {}).get("id") or ""
+    )
+    if consult_id_erro:
+        print(f"[gerar_consulta] usando consult_id do erro: {consult_id_erro}", flush=True)
+        return consult_id_erro
+
+    # Fallback: busca na lista filtrando ESTRITAMENTE por CPF
+    consult_id = _buscar_consulta_por_cpf(cpf_ok)
+    if consult_id:
+        print(f"[gerar_consulta] reutilizando consulta existente do CPF {cpf_ok}: {consult_id}", flush=True)
+        return consult_id
+
+    r.raise_for_status()
+    return ""
+
+def _buscar_consulta_por_cpf(cpf_ok: str) -> Optional[str]:
+    """Busca consulta existente filtrando ESTRITAMENTE pelo CPF informado."""
+    r = requests.get(
+        f"{V8_BASE_URL}/private-consignment/consult",
+        headers=v8_headers(),
+        params={"limit": 20, "page": 1, "documentNumber": cpf_ok},
+        timeout=30,
+    )
     if not r.ok:
         return None
+
     for item in r.json().get("data", []):
         cid = item["id"]
         try:
-            chk = requests.get(f"{V8_BASE_URL}/private-consignment/consult/{cid}",
-                                headers=v8_headers(), timeout=30)
-            if chk.ok and chk.json().get("status") in ("WAITING_CONSENT", "WAITING_CONSULT", "AUTHORIZED", "SUCCESS"):
+            chk = requests.get(
+                f"{V8_BASE_URL}/private-consignment/consult/{cid}",
+                headers=v8_headers(), timeout=30
+            )
+            if not chk.ok:
+                continue
+            detalhe = chk.json()
+            status  = detalhe.get("status", "")
+
+            # VALIDA CPF: ignora consultas de outros clientes
+            cpf_detalhe = _cpf_da_consulta(detalhe)
+            if cpf_detalhe and cpf_detalhe != cpf_ok:
+                print(f"[buscar_consulta] IGNORANDO {cid}: CPF diferente ({cpf_detalhe} != {cpf_ok})", flush=True)
+                continue
+
+            # Só reutiliza se ainda processável
+            if status in ("WAITING_CONSENT", "WAITING_CONSULT", "AUTHORIZED", "SUCCESS"):
+                # Se SUCCESS, verifica se tem margem válida
+                if status == "SUCCESS":
+                    margem = float(detalhe.get("marginBaseValue") or 0)
+                    if margem <= 0:
+                        print(f"[buscar_consulta] IGNORANDO {cid}: SUCCESS mas margem=0", flush=True)
+                        continue
+                print(f"[buscar_consulta] usando {cid} status={status} cpf={cpf_detalhe}", flush=True)
                 return cid
-        except:
-            pass
+        except Exception as e:
+            print(f"[buscar_consulta] erro ao verificar {cid}: {e}", flush=True)
     return None
 
 def _fluxo_consulta_sync(task_id: str, cpf, nome, email, celular, data_nasc, genero):
+    cpf_ok = _cpf_limpo(cpf)
     tasks[task_id] = {"status": "processing", "step": "Gerando consulta...", "data": None, "error": None}
     try:
-        consult_id = _gerar_consulta(cpf, nome, email, celular, data_nasc, genero)
-        tasks[task_id]["step"] = "Autorizando consulta..."
+        print(f"[fluxo] iniciando para CPF={cpf_ok} nome={nome}", flush=True)
+        consult_id = _gerar_consulta_nova(cpf, nome, email, celular, data_nasc, genero)
+        tasks[task_id]["step"] = "Verificando status da consulta..."
 
-        # verifica status atual
+        # Verifica status atual antes de autorizar
         dados_pre = _buscar_dados_consulta(consult_id)
         status_pre = dados_pre.get("status", "")
+        print(f"[fluxo] consult_id={consult_id} status_pre={status_pre}", flush=True)
 
-        if status_pre == "SUCCESS":
-            _montar_resultado(task_id, consult_id, dados_pre)
+        # Valida que a consulta é do CPF correto
+        cpf_consulta = _cpf_da_consulta(dados_pre)
+        if cpf_consulta and cpf_consulta != cpf_ok:
+            print(f"[fluxo] ERRO: consulta {consult_id} é do CPF {cpf_consulta}, não {cpf_ok}", flush=True)
+            tasks[task_id] = {"status": "error", "data": None,
+                              "error": f"Consulta retornou dados de outro cliente. Tente novamente.",
+                              "step": "Erro de validação"}
             return
+
+        # Se já tem resultado com margem válida, retorna direto
+        if status_pre == "SUCCESS":
+            margem = float(dados_pre.get("marginBaseValue") or 0)
+            if margem > 0:
+                print(f"[fluxo] SUCCESS com margem={margem}, retornando direto", flush=True)
+                _montar_resultado(task_id, consult_id, dados_pre)
+                return
 
         if status_pre.upper() in _STATUS_REJEITADO:
             tasks[task_id] = {"status": "error", "step": "Rejeitado", "data": None,
-                              "error": f"Consulta rejeitada: {status_pre}"}
+                              "error": f"Consulta rejeitada com status: {status_pre}"}
             return
 
-        if status_pre not in ("WAITING_CONSULT",):
-            requests.post(f"{V8_BASE_URL}/private-consignment/consult/{consult_id}/authorize",
-                          headers=v8_headers(), timeout=30)
+        # Autoriza se necessário
+        if status_pre not in ("WAITING_CONSULT", "SUCCESS"):
+            tasks[task_id]["step"] = "Autorizando consulta..."
+            try:
+                requests.post(
+                    f"{V8_BASE_URL}/private-consignment/consult/{consult_id}/authorize",
+                    headers=v8_headers(), timeout=30
+                )
+                print(f"[fluxo] consulta autorizada", flush=True)
+            except Exception as e:
+                print(f"[fluxo] erro ao autorizar: {e}", flush=True)
 
-        tasks[task_id]["step"] = "Aguardando processamento (até 3 min)..."
+        tasks[task_id]["step"] = "Aguardando processamento (pode levar até 3 min)..."
 
+        # Polling com esperas progressivas
         esperas = [30, 50, 50, 40]
         dados = None
         for i, espera in enumerate(esperas):
+            print(f"[fluxo] aguardando {espera}s antes da tentativa {i+1}/4...", flush=True)
             time.sleep(espera)
             try:
                 dados = _buscar_dados_consulta(consult_id)
                 status = dados.get("status", "")
+                margem = float(dados.get("marginBaseValue") or 0)
                 tasks[task_id]["step"] = f"Processando... tentativa {i+1}/4 (status: {status})"
-                if status == "SUCCESS":
+                print(f"[fluxo] tentativa {i+1}/4: status={status} margem={margem}", flush=True)
+
+                if status == "SUCCESS" and margem > 0:
                     break
                 if status.upper() in _STATUS_REJEITADO:
                     tasks[task_id] = {"status": "error", "step": "Rejeitado", "data": None,
                                       "error": f"Consulta rejeitada: {status}"}
                     return
             except Exception as e:
+                print(f"[fluxo] tentativa {i+1}/4 erro: {e}", flush=True)
                 tasks[task_id]["step"] = f"Tentativa {i+1}/4 com erro, aguardando..."
 
-        if not dados or dados.get("status") != "SUCCESS":
+        # Verifica resultado final
+        status_final = dados.get("status") if dados else "desconhecido"
+        margem_final = float(dados.get("marginBaseValue") or 0) if dados else 0
+
+        if not dados or status_final != "SUCCESS" or margem_final <= 0:
+            print(f"[fluxo] timeout: status={status_final} margem={margem_final}", flush=True)
             tasks[task_id] = {"status": "error", "step": "Timeout", "data": None,
-                              "error": "Consulta não processou em tempo hábil. Tente novamente."}
+                              "error": f"Consulta não retornou margem válida (status: {status_final}). Tente novamente."}
             return
 
+        print(f"[fluxo] SUCESSO: margem={margem_final}", flush=True)
         _montar_resultado(task_id, consult_id, dados)
 
     except Exception as e:
+        print(f"[fluxo] exceção: {e}", flush=True)
         tasks[task_id] = {"status": "error", "step": "Erro", "data": None, "error": str(e)}
 
 
