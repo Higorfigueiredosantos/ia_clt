@@ -102,7 +102,8 @@ def _gerar_consulta_nova(cpf, nome, email, celular, data_nasc, genero) -> str:
     try: body = r.json()
     except: pass
 
-    print(f"[gerar_consulta] erro {r.status_code}: {body}", flush=True)
+    erro_msg = str(body) if body else r.text[:300]
+    print(f"[gerar_consulta] erro {r.status_code}: {erro_msg}", flush=True)
 
     # Tenta extrair consult_id da resposta de erro
     consult_id_erro = (
@@ -120,8 +121,8 @@ def _gerar_consulta_nova(cpf, nome, email, celular, data_nasc, genero) -> str:
         print(f"[gerar_consulta] reutilizando consulta existente do CPF {cpf_ok}: {consult_id}", flush=True)
         return consult_id
 
-    r.raise_for_status()
-    return ""
+    # Mostra erro real da V8 para diagnóstico
+    raise Exception(f"V8 API erro {r.status_code}: {erro_msg}")
 
 def _buscar_consulta_por_cpf(cpf_ok: str) -> Optional[str]:
     """Busca consulta existente filtrando ESTRITAMENTE pelo CPF informado."""
@@ -153,7 +154,7 @@ def _buscar_consulta_por_cpf(cpf_ok: str) -> Optional[str]:
                 continue
 
             # Só reutiliza se ainda processável
-            if status in ("WAITING_CONSENT", "WAITING_CONSULT", "AUTHORIZED", "SUCCESS"):
+            if status in ("WAITING_CONSENT", "WAITING_CONSULT", "AUTHORIZED", "IN_ANALYSIS", "PENDING", "PROCESSING", "CREATED", "SUCCESS"):
                 # Se SUCCESS, verifica se tem margem válida
                 if status == "SUCCESS":
                     margem = float(detalhe.get("marginBaseValue") or 0)
