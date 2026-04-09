@@ -585,7 +585,8 @@ function goStep(n) {
   const pct = Math.round((n / STEPS) * 100);
   document.getElementById('prog-fill').style.width = pct + '%';
 
-  if (n === 3 && S.consulta && S.installments.length === 0) loadParcelas();
+  if (n === 3 && S.consulta) loadParcelas();
+  if (n === 4) preencheStep4();
   if (n === 7) renderReview();
 }
 
@@ -1051,11 +1052,22 @@ function formatCPF(cpf) {
   return c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
 }
 
-// Auto-preenche nome da mãe quando entra no step 4
-document.getElementById('si-4')?.addEventListener('click', () => {
-  if (S.consulta?.mother_name && !document.getElementById('f-mae').value)
+// Auto-preenche step 4 quando entra nele
+function preencheStep4() {
+  // RG = 8 últimos dígitos do CPF
+  if (S.cpf && !document.getElementById('f-rg').value) {
+    const cpfLimpo = S.cpf.replace(/\D/g,'');
+    document.getElementById('f-rg').value = cpfLimpo.slice(-8);
+  }
+  // Data de expedição padrão: 18/01/2021
+  if (!document.getElementById('f-rg-data').value) {
+    document.getElementById('f-rg-data').value = '2021-01-18';
+  }
+  // Nome da mãe da consulta V8
+  if (S.consulta?.mother_name && !document.getElementById('f-mae').value) {
     document.getElementById('f-mae').value = S.consulta.mother_name;
-});
+  }
+}
 </script>
 </body>
 </html>
