@@ -89,7 +89,7 @@ def _gerar_consulta_nova(cpf, nome, email, celular, data_nasc, genero) -> str:
         "signerEmail": email,
         "signerPhone": {"countryCode": "55", "areaCode": area_code, "phoneNumber": number},
         "birthDate": data_nasc,
-        "gender": genero.lower(),
+        "gender": {"M": "male", "F": "female", "m": "male", "f": "female"}.get(genero, genero),
     }
     r = requests.post(f"{V8_BASE_URL}/private-consignment/consult",
                       headers=v8_headers(), json=payload, timeout=30)
