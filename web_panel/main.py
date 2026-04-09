@@ -448,7 +448,7 @@ def proposta(body: PropostaBody):
             "birth_date": body.birth_date,
             "mother_name": body.mother_name,
             "nationality": body.nationality or "Brasileiro",
-            "gender": body.gender,
+            "gender": {"M": "male", "F": "female", "m": "male", "f": "female"}.get(body.gender, body.gender),
             "person_type": "natural",
             "marital_status": body.marital_status,
             "individual_document_number": cpf_limpo,
