@@ -3,23 +3,20 @@ version: "3.8"
 services:
   painel-clt:
     image: higorclt/painel-clt:latest
-    container_name: painel-clt
     ports:
       - "8080:8080"
     environment:
-      # Credenciais V8 Sistema
       - V8_AUTH_URL=${V8_AUTH_URL}
       - V8_CLIENT_ID=${V8_CLIENT_ID}
       - V8_USERNAME=${V8_USERNAME}
       - V8_PASSWORD=${V8_PASSWORD}
       - V8_CONFIG_ID=${V8_CONFIG_ID:-fbbb3a06-05ca-4567-9a92-ce78cb4db796}
-      # Credenciais do painel web
       - PANEL_USER=${PANEL_USER:-admin}
       - PANEL_PASS=${PANEL_PASS:-clt2024}
       - PANEL_PORT=8080
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
