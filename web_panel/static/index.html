@@ -296,16 +296,34 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;font-wei
 
       <!-- ── STEP 3: SIMULAÇÃO ── -->
       <div class="page" id="page-3">
-        <p class="page-title">Simulação de Parcelas</p>
-        <p class="page-sub">Selecione a opção de parcelamento desejada.</p>
+        <p class="page-title">Simulação</p>
+        <p class="page-sub">Informe o valor da parcela e escolha o prazo para simular.</p>
 
         <div class="card" id="s3-loading" style="display:none">
-          <div class="loader"><div class="spinner"></div><div class="loader-text">Carregando opções...</div></div>
+          <div class="loader"><div class="spinner"></div><div class="loader-text">Simulando...</div></div>
         </div>
 
         <div id="s3-content">
-          <div id="s3-alert" style="display:none"></div>
-          <div class="parcelas-grid" id="s3-parcelas"></div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="grid2">
+              <div class="form-row">
+                <label>Valor da Parcela (R$) *</label>
+                <input id="f-sim-valor" type="number" step="0.01" min="0" placeholder="Ex: 350.00"/>
+                <div style="font-size:11px;color:var(--muted);margin-top:4px" id="s3-margem-hint"></div>
+              </div>
+              <div class="form-row">
+                <label>Número de Parcelas *</label>
+                <select id="f-sim-parcelas">
+                  <option value="">Carregando...</option>
+                </select>
+              </div>
+            </div>
+            <div id="s3-alert" style="display:none"></div>
+            <div class="actions">
+              <button class="btn btn-primary" onclick="executarSimulacao()">Simular</button>
+              <button class="btn btn-secondary" onclick="goStep(2)">← Voltar</button>
+            </div>
+          </div>
 
           <div class="card" id="s3-sim-result" style="display:none">
             <div class="sim-big" id="s3-valor-liberar"></div>
@@ -316,9 +334,6 @@ label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;font-wei
           <div id="s3-sim-alert" style="display:none"></div>
           <div class="actions" id="s3-actions" style="display:none">
             <button class="btn btn-primary" onclick="goStep(4)">Continuar →</button>
-            <button class="btn btn-secondary" onclick="goStep(2)">← Voltar</button>
-          </div>
-          <div class="actions" id="s3-actions-select" style="margin-top:8px">
             <button class="btn btn-secondary" onclick="goStep(2)">← Voltar</button>
           </div>
         </div>
@@ -717,8 +732,18 @@ function infoCard(label, value, color) {
 
 // ═══════════════════════ STEP 3 — SIMULAÇÃO ═══════════════════════
 async function loadParcelas() {
-  document.getElementById('s3-loading').style.display = 'block';
-  document.getElementById('s3-content').style.display = 'none';
+  document.getElementById('s3-loading').style.display = 'none';
+  document.getElementById('s3-content').style.display = 'block';
+
+  // pré-preenche o valor com a margem disponível
+  if (S.consulta) {
+    const margem = S.consulta.recommended_installment_value || S.consulta.margem_disponivel || 0;
+    document.getElementById('f-sim-valor').value = margem.toFixed(2);
+    document.getElementById('s3-margem-hint').textContent =
+      `Margem disponível: ${fmtBRL(S.consulta.margem_disponivel)} — Parcela sugerida: ${fmtBRL(S.consulta.recommended_installment_value)}`;
+  }
+
+  // carrega opções de prazo
   try {
     const r = await fetch('/api/v8/parcelas', {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -726,58 +751,58 @@ async function loadParcelas() {
     });
     const d = await r.json();
     S.installments = d.installments || [];
-    renderParcelas();
+    const sel = document.getElementById('f-sim-parcelas');
+    if (S.installments.length) {
+      sel.innerHTML = S.installments.map(i => {
+        const num = i.installmentNumbers || i.installment_numbers || i.number;
+        return `<option value="${num}">${num}x</option>`;
+      }).join('');
+      // seleciona o prazo sugerido se disponível
+      const sugerido = S.consulta?.recommended_installment_number;
+      if (sugerido) sel.value = sugerido;
+    } else {
+      // fallback com prazos padrão
+      sel.innerHTML = [6,8,10,12,18,24,36,48].map(n => `<option value="${n}">${n}x</option>`).join('');
+    }
   } catch(e) {
-    S.installments = [];
-    renderParcelas();
-    showAlert('s3-alert','err','Erro ao carregar parcelas: ' + e.message);
-  } finally {
-    document.getElementById('s3-loading').style.display = 'none';
-    document.getElementById('s3-content').style.display = 'block';
+    const sel = document.getElementById('f-sim-parcelas');
+    sel.innerHTML = [6,8,10,12,18,24,36,48].map(n => `<option value="${n}">${n}x</option>`).join('');
   }
-}
-
-function renderParcelas() {
-  const grid = document.getElementById('s3-parcelas');
-  if (!S.installments.length) {
-    grid.innerHTML = '<p style="color:var(--muted)">Nenhuma opção de parcela disponível.</p>';
-    return;
-  }
-  grid.innerHTML = S.installments.map(inst => `
-    <div class="parcela-card" id="pc-${inst.installmentNumbers}" onclick="selectParcela(${inst.installmentNumbers}, ${inst.installmentValue})">
-      <div class="pc-num">${inst.installmentNumbers}x</div>
-      <div class="pc-label">parcelas de</div>
-      <div class="pc-value">${fmtBRL(inst.installmentValue)}</div>
-    </div>
-  `).join('');
-}
-
-async function selectParcela(num, val) {
-  document.querySelectorAll('.parcela-card').forEach(c => c.classList.remove('selected'));
-  document.getElementById(`pc-${num}`).classList.add('selected');
-  S.selectedInstallment = {installmentNumbers: num, installmentValue: val};
 
   document.getElementById('s3-sim-result').style.display = 'none';
-  document.getElementById('s3-sim-alert').style.display = 'none';
   document.getElementById('s3-actions').style.display = 'none';
+}
+
+async function executarSimulacao() {
+  const valor = parseFloat(document.getElementById('f-sim-valor').value);
+  const num   = parseInt(document.getElementById('f-sim-parcelas').value);
+
+  if (!valor || valor <= 0) { showAlert('s3-alert','err','Informe o valor da parcela.'); return; }
+  if (!num) { showAlert('s3-alert','err','Selecione o número de parcelas.'); return; }
+
+  document.getElementById('s3-loading').style.display = 'block';
+  document.getElementById('s3-content').style.display = 'none';
 
   try {
     const r = await fetch('/api/v8/simular', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         consult_id: S.consulta.consult_id,
-        installment_face_value: val,
+        installment_face_value: valor,
         number_of_installments: num
       })
     });
     if (!r.ok) { const t = await r.text(); throw new Error(t); }
     S.simulacao = await r.json();
+    document.getElementById('s3-loading').style.display = 'none';
+    document.getElementById('s3-content').style.display = 'block';
     renderSimResult();
     S.maxStep = Math.max(S.maxStep, 4);
     document.getElementById('s3-actions').style.display = 'flex';
-    document.getElementById('s3-actions-select').style.display = 'none';
   } catch(e) {
-    showAlert('s3-sim-alert','err','Erro na simulação: ' + e.message);
+    document.getElementById('s3-loading').style.display = 'none';
+    document.getElementById('s3-content').style.display = 'block';
+    showAlert('s3-alert','err','Erro na simulação: ' + e.message);
   }
 }
 
@@ -1006,8 +1031,8 @@ function novaOperacao(redirect = true) {
   document.getElementById('s7-success').style.display = 'none';
   document.getElementById('s3-sim-result').style.display = 'none';
   document.getElementById('s3-actions').style.display = 'none';
-  document.getElementById('s3-actions-select').style.display = 'flex';
-  document.getElementById('s3-parcelas').innerHTML = '';
+  document.getElementById('f-sim-valor').value = '';
+  document.getElementById('f-sim-parcelas').innerHTML = '<option value="">Carregando...</option>';
   if (redirect) goStep(1);
 }
 
