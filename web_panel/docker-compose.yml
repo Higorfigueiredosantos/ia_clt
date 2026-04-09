@@ -2,8 +2,7 @@ version: "3.8"
 
 services:
   painel-clt:
-    build: .
-    image: painel-clt:latest
+    image: higorclt/painel-clt:latest
     container_name: painel-clt
     ports:
       - "8080:8080"
