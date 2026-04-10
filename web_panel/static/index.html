@@ -654,7 +654,7 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
               <div class="form-row"><label>Data de Nascimento *</label><input id="f-nasc" type="date"/></div>
             </div>
             <div class="form-row" style="max-width:200px"><label>Gênero *</label>
-              <select id="f-genero"><option value="">Selecione</option><option value="M">Masculino</option><option value="F">Feminino</option></select>
+              <select id="f-genero"><option value="">Selecione</option><option value="M" selected>Masculino</option><option value="F">Feminino</option></select>
             </div>
             <div id="s1-alert"></div>
             <div class="frow" style="margin-top:8px">
@@ -1193,7 +1193,7 @@ async function buscarDadosCliente(){
     if(d.name) document.getElementById('f-nome').value=d.name;
     if(d.email) document.getElementById('f-email').value=d.email;
     if(d.birthDate) document.getElementById('f-nasc').value=d.birthDate.split('T')[0];
-    if(d.gender) document.getElementById('f-genero').value=d.gender.toUpperCase().startsWith('M')?'M':'F';
+    if(d.gender){const gv=d.gender.toUpperCase().startsWith('M')?'M':'F';document.getElementById('f-genero').value=gv;}
     if(d.phoneRegionCode&&d.phoneNumber) document.getElementById('f-celular').value=d.phoneRegionCode+d.phoneNumber;
     toast('Dados preenchidos automaticamente','success');
   } catch(e){ toast('Dados não encontrados, preencha manualmente','info'); }
@@ -1355,11 +1355,12 @@ async function executarSimulacao(){
 // STEP 4
 // ══════════════════════════════════════════
 function preencheStep4(){
-  if(S.cpf&&!document.getElementById('f-rg').value){
+  if(S.cpf&&!document.getElementById('f-rg').value)
     document.getElementById('f-rg').value=S.cpf.replace(/\D/g,'').slice(-8);
-  }
   if(!document.getElementById('f-rg-data').value) document.getElementById('f-rg-data').value='2021-01-18';
   if(S.consulta?.mother_name&&!document.getElementById('f-mae').value) document.getElementById('f-mae').value=S.consulta.mother_name;
+  // Estado civil padrão: solteiro
+  if(!document.getElementById('f-civil').value) document.getElementById('f-civil').value='single';
 }
 
 function submitStep4(){
@@ -1392,6 +1393,7 @@ async function buscarCEP(){
     if(d.bairro) document.getElementById('f-bairro').value=d.bairro;
     if(d.localidade) document.getElementById('f-cidade').value=d.localidade;
     if(d.uf) document.getElementById('f-estado').value=d.uf.toUpperCase();
+    if(!document.getElementById('f-num').value) document.getElementById('f-num').value='01';
     document.getElementById('f-num').focus();
     toast('Endereço preenchido via ViaCEP','success');
   }catch(e){toast('CEP não encontrado','error');}
@@ -1515,7 +1517,9 @@ function novaOperacao(redirect=true){
   ['f-cpf','f-nome','f-email','f-celular','f-nasc','f-rg','f-rg-data','f-mae',
    'f-cep','f-rua','f-num','f-compl','f-bairro','f-cidade','f-estado','f-pix-chave']
     .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  ['f-genero','f-civil','f-pix-tipo','f-pix-banco'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-pix-tipo','f-pix-banco'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('f-genero').value='M';
+  document.getElementById('f-civil').value='single';
   document.getElementById('f-rg-orgao').value='SSP';
   document.getElementById('f-nac').value='Brasileiro';
   document.getElementById('s2-loading').style.display='block';
