@@ -500,6 +500,30 @@ def proposta(body: PropostaBody):
     data = r.json()
     return {"operation_id": data["id"], "formalization_url": data["formalization_url"]}
 
+# ─── LISTAR OPERAÇÕES ────────────────────────────────────────────────────────
+
+V8_BFF_URL = "https://bff.v8sistema.com"
+
+@app.get("/api/v8/operacoes")
+def listar_operacoes(
+    startDate: Optional[str] = None,
+    endDate: Optional[str] = None,
+    page: int = 1,
+    limit: int = 50,
+    status: Optional[str] = None,
+):
+    params: dict = {"page": page, "limit": limit}
+    if startDate: params["startDate"] = startDate
+    if endDate:   params["endDate"]   = endDate
+    if status:    params["status"]    = status
+    r = requests.get(
+        f"{V8_BFF_URL}/private-consignment/operation",
+        headers=v8_headers(), params=params, timeout=30
+    )
+    if not r.ok:
+        raise HTTPException(status_code=r.status_code, detail=r.text)
+    return r.json()
+
 # ─── VIA CEP ─────────────────────────────────────────────────────────────────
 
 @app.get("/api/viacep/{cep}")

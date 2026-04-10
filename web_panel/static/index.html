@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>TotalCred — Painel Operacional</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <style>
 :root{
   --bg:#07090f;--surface:#0e1117;--surface2:#151b27;--surface3:#1c2535;
@@ -15,6 +16,16 @@
   --radius:12px;--radius-sm:8px;
   --shadow:0 4px 24px rgba(0,0,0,.4);
   --shadow-lg:0 8px 40px rgba(0,0,0,.6);
+}
+body.light{
+  --bg:#f1f5f9;--surface:#ffffff;--surface2:#f8fafc;--surface3:#edf2f7;
+  --border:#dde3ef;--border2:#c8d0e0;
+  --primary:#3b72e0;--primary2:#2563eb;--primary-glow:rgba(59,114,224,.12);
+  --green:#16a34a;--green-glow:rgba(22,163,74,.1);
+  --red:#dc2626;--yellow:#d97706;--purple:#7c3aed;--cyan:#0891b2;
+  --text:#0f172a;--text2:#475569;--text3:#94a3b8;
+  --shadow:0 4px 24px rgba(0,0,0,.08);
+  --shadow-lg:0 8px 40px rgba(0,0,0,.12);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -330,10 +341,44 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
    ALERTS
 ══════════════════════════════════════════ */
 .alert{border-radius:8px;padding:12px 16px;font-size:13px;display:flex;gap:10px;align-items:flex-start;margin-bottom:14px}
-.alert-err{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:#fca5a5}
-.alert-info{background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);color:#93c5fd}
-.alert-warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:#fcd34d}
-.alert-success{background:var(--green-glow);border:1px solid rgba(34,197,94,.2);color:#86efac}
+.alert-err{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:var(--red)}
+.alert-info{background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);color:var(--primary)}
+.alert-warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:var(--yellow)}
+.alert-success{background:var(--green-glow);border:1px solid rgba(34,197,94,.2);color:var(--green)}
+
+/* ══════════════════════════════════════════
+   PROPOSALS TABLE
+══════════════════════════════════════════ */
+.ops-table{width:100%;border-collapse:collapse;font-size:13px}
+.ops-table th{text-align:left;padding:10px 14px;font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px;color:var(--text2);
+  border-bottom:1px solid var(--border);white-space:nowrap}
+.ops-table td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.ops-table tr:last-child td{border-bottom:none}
+.ops-table tr:hover td{background:var(--surface2)}
+.ops-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.status-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.status-paid{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.status-formalization{background:rgba(79,142,247,.12);color:var(--primary);border:1px solid rgba(79,142,247,.2)}
+.status-analysis,.status-manual_analysis{background:rgba(245,158,11,.12);color:var(--yellow);border:1px solid rgba(245,158,11,.2)}
+.status-processing{background:rgba(168,85,247,.12);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
+.status-canceled,.status-refunded{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.status-pending,.status-awaiting_call{background:rgba(6,182,212,.1);color:var(--cyan);border:1px solid rgba(6,182,212,.2)}
+
+/* FILTER BAR */
+.filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.filter-bar input,.filter-bar select{width:auto;padding:8px 12px;font-size:12px}
+.filter-bar label{margin-bottom:0;font-size:11px;white-space:nowrap}
+
+/* CHART */
+.chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+.chart-wrap h3{font-size:14px;font-weight:700;margin-bottom:16px;color:var(--text)}
+
+/* THEME TOGGLE */
+.theme-btn{background:var(--surface2);border:1.5px solid var(--border);border-radius:20px;
+  padding:5px 10px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:5px;
+  color:var(--text2);transition:.2s}
+.theme-btn:hover{border-color:var(--primary);color:var(--primary)}
 </style>
 </head>
 <body>
@@ -420,6 +465,7 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
       </div>
     </div>
     <div class="topbar-right">
+      <button class="theme-btn" onclick="toggleTheme()" id="theme-btn" title="Alternar tema">🌙 Escuro</button>
       <button class="btn btn-ghost btn-sm btn-icon" onclick="showScreen('banks')" title="Trocar banco">🏦</button>
       <div class="topbar-user" id="tb-user"></div>
       <div class="topbar-avatar" id="tb-avatar">U</div>
@@ -440,6 +486,9 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
       <div class="nav-item" id="nav-history" onclick="setPage('history')">
         <span class="nav-icon">📋</span> Histórico
         <span class="nav-badge" id="history-badge" style="display:none">0</span>
+      </div>
+      <div class="nav-item" id="nav-proposals" onclick="setPage('proposals')">
+        <span class="nav-icon">📑</span> Propostas V8
       </div>
       <div class="nav-group-label">Sistema</div>
       <div class="nav-item" id="nav-settings" onclick="setPage('settings')">
@@ -474,6 +523,18 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
           </div>
         </div>
 
+        <!-- FILTRO DATA DASHBOARD -->
+        <div class="filter-bar" style="margin-bottom:16px">
+          <label>De:</label>
+          <input type="date" id="dash-start" style="width:150px"/>
+          <label>Até:</label>
+          <input type="date" id="dash-end" style="width:150px"/>
+          <button class="btn btn-primary btn-sm" onclick="carregarDashboardV8()">🔄 Atualizar</button>
+          <button class="btn btn-ghost btn-sm" onclick="setDashHoje()">Hoje</button>
+          <button class="btn btn-ghost btn-sm" onclick="setDash7dias()">7 dias</button>
+          <button class="btn btn-ghost btn-sm" onclick="setDash30dias()">30 dias</button>
+        </div>
+
         <div class="stat-grid">
           <div class="stat-card blue">
             <div class="stat-icon">🔍</div>
@@ -485,34 +546,46 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
             <div class="stat-icon">✅</div>
             <div class="stat-value" id="stat-propostas">0</div>
             <div class="stat-label">Propostas</div>
-            <div class="stat-sub">Geradas</div>
+            <div class="stat-sub">Geradas hoje</div>
           </div>
           <div class="stat-card purple">
             <div class="stat-icon">💰</div>
             <div class="stat-value" id="stat-volume">R$ 0</div>
             <div class="stat-label">Volume</div>
-            <div class="stat-sub">Total liberado</div>
+            <div class="stat-sub">Total período</div>
           </div>
           <div class="stat-card yellow">
-            <div class="stat-icon">📈</div>
-            <div class="stat-value" id="stat-taxa">—</div>
-            <div class="stat-label">Tx. Sucesso</div>
-            <div class="stat-sub">Conversão</div>
+            <div class="stat-icon">✔️</div>
+            <div class="stat-value" id="stat-pagas">0</div>
+            <div class="stat-label">Pagas</div>
+            <div class="stat-sub">Status paid</div>
+          </div>
+        </div>
+
+        <!-- GRÁFICOS -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+          <div class="chart-wrap">
+            <h3>📊 Volume por Dia (R$)</h3>
+            <canvas id="chart-volume" height="180"></canvas>
+          </div>
+          <div class="chart-wrap">
+            <h3>📈 Quantidade por Dia</h3>
+            <canvas id="chart-qtd" height="180"></canvas>
           </div>
         </div>
 
         <div class="page-header" style="margin-bottom:14px"><h2 style="font-size:15px">Ações Rápidas</h2></div>
         <div class="quick-actions">
           <div class="qa-btn" onclick="setPage('operation')"><div class="qa-icon">➕</div>Nova Operação</div>
-          <div class="qa-btn" onclick="setPage('history')"><div class="qa-icon">📋</div>Histórico</div>
+          <div class="qa-btn" onclick="setPage('proposals')"><div class="qa-icon">📑</div>Propostas V8</div>
           <div class="qa-btn" onclick="showScreen('banks')"><div class="qa-icon">🏦</div>Trocar Banco</div>
           <div class="qa-btn" onclick="setPage('settings')"><div class="qa-icon">⚙️</div>Configurações</div>
         </div>
 
-        <div class="page-header" style="margin-bottom:14px"><h2 style="font-size:15px">Últimas Operações</h2></div>
+        <div class="page-header" style="margin-bottom:14px"><h2 style="font-size:15px">Últimas Operações (V8)</h2></div>
         <div id="dash-history">
           <div style="text-align:center;padding:32px;color:var(--text3);font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">
-            Nenhuma operação nesta sessão
+            Clique em "Atualizar" para carregar as operações
           </div>
         </div>
       </div>
@@ -856,6 +929,68 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
         </div>
       </div>
 
+      <!-- ── PROPOSTAS V8 ── -->
+      <div class="page" id="page-proposals">
+        <div class="page-header">
+          <div class="frow">
+            <div><h2>Propostas V8</h2><p class="muted">Operações registradas na plataforma V8</p></div>
+            <button class="btn btn-primary btn-sm" onclick="buscarOperacoes()">🔄 Atualizar</button>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <label>De:</label>
+          <input type="date" id="prop-start" style="width:150px"/>
+          <label>Até:</label>
+          <input type="date" id="prop-end" style="width:150px"/>
+          <label>Status:</label>
+          <select id="prop-status" style="width:170px">
+            <option value="">Todos</option>
+            <option value="formalization">Formalização</option>
+            <option value="analysis">Análise</option>
+            <option value="manual_analysis">Análise Manual</option>
+            <option value="awaiting_call">Aguard. Ligação</option>
+            <option value="processing">Processando</option>
+            <option value="paid">Pago</option>
+            <option value="canceled">Cancelado</option>
+            <option value="pending">Pendente</option>
+            <option value="refunded">Reembolsado</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="buscarOperacoes()">🔍 Buscar</button>
+          <button class="btn btn-ghost btn-sm" onclick="setPropHoje()">Hoje</button>
+          <button class="btn btn-ghost btn-sm" onclick="setProp7dias()">7 dias</button>
+          <button class="btn btn-ghost btn-sm" onclick="setProp30dias()">30 dias</button>
+        </div>
+
+        <!-- TOTAIS RÁPIDOS -->
+        <div class="stat-grid" id="prop-stats" style="margin-bottom:20px"></div>
+
+        <!-- TABELA -->
+        <div id="prop-loading" style="display:none;text-align:center;padding:32px;color:var(--text2)">
+          <div class="spinner" style="margin:0 auto 12px"></div>Carregando operações...
+        </div>
+        <div id="prop-empty" style="display:none;text-align:center;padding:48px;color:var(--text3);font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">
+          Nenhuma operação encontrada no período.
+        </div>
+        <div class="ops-table-wrap" id="prop-table-wrap" style="display:none">
+          <table class="ops-table">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>CPF</th>
+                <th>Contrato</th>
+                <th>Valor Bruto</th>
+                <th>Valor Líquido</th>
+                <th>Status</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody id="prop-tbody"></tbody>
+          </table>
+        </div>
+        <div id="prop-pagination" style="display:flex;gap:8px;margin-top:14px;justify-content:center"></div>
+      </div>
+
       <!-- ── CONFIGURAÇÕES ── -->
       <div class="page" id="page-settings">
         <div class="page-header">
@@ -987,6 +1122,7 @@ function selectBank(bank) {
   document.getElementById('sb-bank').textContent = bank==='v8'?'V8 Sistema':'Banco';
   document.getElementById('op-bank-label').textContent = labels[bank]||bank;
   showScreen('app');
+  initDashboardDates();
   setPage('dashboard');
   toast('V8 Sistema selecionado','success');
 }
@@ -1001,7 +1137,8 @@ function setPage(name) {
   const nav = document.getElementById(`nav-${name}`);
   if(nav) nav.classList.add('active');
   if(name==='history') renderHistory();
-  if(name==='dashboard') updateDashboard();
+  if(name==='dashboard'){ updateDashboard(); carregarDashboardV8(); }
+  if(name==='proposals'){ setProp7dias(); buscarOperacoes(); }
 }
 
 function advanceToStep(n) {
@@ -1398,8 +1535,7 @@ function updateDashboard(){
   document.getElementById('stat-consultas').textContent=stats.consultas;
   document.getElementById('stat-propostas').textContent=stats.propostas;
   document.getElementById('stat-volume').textContent=stats.volume>0?fmtBRL(stats.volume):'R$ 0';
-  const taxa=stats.consultas>0?Math.round((stats.propostas/stats.consultas)*100)+'%':'—';
-  document.getElementById('stat-taxa').textContent=taxa;
+  // stat-pagas is updated by carregarDashboardV8
   const dash=document.getElementById('dash-history');
   if(history.length===0){
     dash.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">Nenhuma operação nesta sessão</div>';
@@ -1432,6 +1568,262 @@ function renderHistory(){
 }
 
 function limparHistorico(){history.length=0;renderHistory();document.getElementById('history-badge').style.display='none';}
+
+// ══════════════════════════════════════════
+// THEME TOGGLE
+// ══════════════════════════════════════════
+let isDark = true;
+function toggleTheme(){
+  isDark = !isDark;
+  document.body.classList.toggle('light', !isDark);
+  document.getElementById('theme-btn').textContent = isDark ? '🌙 Escuro' : '☀️ Claro';
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  if(chartVolume) chartVolume.destroy(), chartVolume=null;
+  if(chartQtd) chartQtd.destroy(), chartQtd=null;
+}
+(function(){
+  const saved = localStorage.getItem('theme');
+  if(saved === 'light'){ isDark=false; document.body.classList.add('light');
+    setTimeout(()=>{ const b=document.getElementById('theme-btn'); if(b) b.textContent='☀️ Claro'; },0); }
+})();
+
+// ══════════════════════════════════════════
+// PROPOSTAS V8 — LISTAGEM
+// ══════════════════════════════════════════
+let propPage = 1;
+let propTotal = 0;
+
+function _fmtDateISO(d){ return d ? d.split('T')[0] : '—'; }
+function _isoDate(d){ return d ? new Date(d+'T00:00:00').toISOString() : null; }
+
+function setPropHoje(){
+  const t=new Date().toISOString().split('T')[0];
+  document.getElementById('prop-start').value=t;
+  document.getElementById('prop-end').value=t;
+}
+function setProp7dias(){
+  const e=new Date(),s=new Date();s.setDate(s.getDate()-6);
+  document.getElementById('prop-start').value=s.toISOString().split('T')[0];
+  document.getElementById('prop-end').value=e.toISOString().split('T')[0];
+}
+function setProp30dias(){
+  const e=new Date(),s=new Date();s.setDate(s.getDate()-29);
+  document.getElementById('prop-start').value=s.toISOString().split('T')[0];
+  document.getElementById('prop-end').value=e.toISOString().split('T')[0];
+}
+
+function setDashHoje(){
+  const t=new Date().toISOString().split('T')[0];
+  document.getElementById('dash-start').value=t;
+  document.getElementById('dash-end').value=t;
+  carregarDashboardV8();
+}
+function setDash7dias(){
+  const e=new Date(),s=new Date();s.setDate(s.getDate()-6);
+  document.getElementById('dash-start').value=s.toISOString().split('T')[0];
+  document.getElementById('dash-end').value=e.toISOString().split('T')[0];
+  carregarDashboardV8();
+}
+function setDash30dias(){
+  const e=new Date(),s=new Date();s.setDate(s.getDate()-29);
+  document.getElementById('dash-start').value=s.toISOString().split('T')[0];
+  document.getElementById('dash-end').value=e.toISOString().split('T')[0];
+  carregarDashboardV8();
+}
+
+const _STATUS_LABEL = {
+  formalization:'Formalização',analysis:'Análise',manual_analysis:'Análise Manual',
+  awaiting_call:'Aguard. Ligação',processing:'Processando',paid:'Pago',
+  canceled:'Cancelado',pending:'Pendente',refunded:'Reembolsado'
+};
+
+function _statusBadge(s){
+  const l=_STATUS_LABEL[s]||s;
+  return `<span class="status-badge status-${s}">● ${l}</span>`;
+}
+
+function _cpfMask(c){if(!c)return'—';const v=c.replace(/\D/g,'');return v.length===11?v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4'):c;}
+
+async function buscarOperacoes(page=1){
+  propPage=page;
+  const s=document.getElementById('prop-start').value;
+  const e=document.getElementById('prop-end').value;
+  const status=document.getElementById('prop-status').value;
+  document.getElementById('prop-loading').style.display='block';
+  document.getElementById('prop-empty').style.display='none';
+  document.getElementById('prop-table-wrap').style.display='none';
+  document.getElementById('prop-pagination').innerHTML='';
+  document.getElementById('prop-stats').innerHTML='';
+  try{
+    let url=`/api/v8/operacoes?page=${page}&limit=20`;
+    if(s) url+=`&startDate=${new Date(s+'T00:00:00').toISOString()}`;
+    if(e) url+=`&endDate=${new Date(e+'T23:59:59').toISOString()}`;
+    if(status) url+=`&status=${status}`;
+    const r=await fetch(url);
+    if(!r.ok) throw new Error(await r.text());
+    const data=await r.json();
+    document.getElementById('prop-loading').style.display='none';
+    const items = Array.isArray(data) ? data : (data.data||data.items||data.operations||[]);
+    propTotal = data.total||data.count||items.length;
+    if(!items.length){document.getElementById('prop-empty').style.display='block';return;}
+    renderOperacoes(items);
+    renderPropStats(items);
+    renderPropPagination();
+  }catch(err){
+    document.getElementById('prop-loading').style.display='none';
+    document.getElementById('prop-empty').style.display='block';
+    document.getElementById('prop-empty').textContent='Erro ao carregar: '+err.message;
+    toast('Erro ao carregar operações','error');
+  }
+}
+
+function renderOperacoes(items){
+  document.getElementById('prop-table-wrap').style.display='block';
+  document.getElementById('prop-tbody').innerHTML=items.map(op=>`
+    <tr>
+      <td style="font-weight:600">${op.name||op.borrower?.name||'—'}</td>
+      <td>${_cpfMask(op.documentNumber||op.document_number||'')}</td>
+      <td style="font-family:monospace;font-size:11px;color:var(--text2)">${op.contractNumber||op.contract_number||'—'}</td>
+      <td style="color:var(--text)">${op.issueAmount?fmtBRL(op.issueAmount):'—'}</td>
+      <td style="color:var(--green);font-weight:600">${op.disbursedIssueAmount?fmtBRL(op.disbursedIssueAmount):'—'}</td>
+      <td>${_statusBadge(op.status)}</td>
+      <td style="color:var(--text2);font-size:12px">${op.createdAt||op.created_at?new Date(op.createdAt||op.created_at).toLocaleDateString('pt-BR'):'—'}</td>
+    </tr>`).join('');
+}
+
+function renderPropStats(items){
+  const total=items.length;
+  const volume=items.reduce((a,o)=>a+parseFloat(o.disbursedIssueAmount||0),0);
+  const pagas=items.filter(o=>o.status==='paid').length;
+  const form=items.filter(o=>o.status==='formalization').length;
+  document.getElementById('prop-stats').innerHTML=`
+    <div class="stat-card blue"><div class="stat-icon">📋</div><div class="stat-value">${total}</div><div class="stat-label">Total</div></div>
+    <div class="stat-card purple"><div class="stat-icon">💰</div><div class="stat-value">${fmtBRL(volume)}</div><div class="stat-label">Vol. Líquido</div></div>
+    <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-value">${pagas}</div><div class="stat-label">Pagas</div></div>
+    <div class="stat-card blue"><div class="stat-icon">✍️</div><div class="stat-value">${form}</div><div class="stat-label">Formalização</div></div>`;
+}
+
+function renderPropPagination(){
+  if(propTotal<=20) return;
+  const pages=Math.ceil(propTotal/20);
+  const pg=document.getElementById('prop-pagination');
+  let html='';
+  if(propPage>1) html+=`<button class="btn btn-ghost btn-sm" onclick="buscarOperacoes(${propPage-1})">← Anterior</button>`;
+  html+=`<span style="font-size:12px;color:var(--text2);padding:0 8px">Pág ${propPage} de ${pages}</span>`;
+  if(propPage<pages) html+=`<button class="btn btn-ghost btn-sm" onclick="buscarOperacoes(${propPage+1})">Próxima →</button>`;
+  pg.innerHTML=html;
+}
+
+// ══════════════════════════════════════════
+// DASHBOARD V8 — GRÁFICOS
+// ══════════════════════════════════════════
+let chartVolume = null;
+let chartQtd = null;
+
+async function carregarDashboardV8(){
+  const s=document.getElementById('dash-start').value;
+  const e=document.getElementById('dash-end').value;
+  try{
+    let url=`/api/v8/operacoes?limit=200&page=1`;
+    if(s) url+=`&startDate=${new Date(s+'T00:00:00').toISOString()}`;
+    if(e) url+=`&endDate=${new Date(e+'T23:59:59').toISOString()}`;
+    const r=await fetch(url);
+    if(!r.ok) throw new Error(await r.text());
+    const data=await r.json();
+    const items=Array.isArray(data)?data:(data.data||data.items||data.operations||[]);
+    processarDadosDashboard(items);
+  }catch(err){
+    toast('Erro ao carregar dashboard: '+err.message,'error');
+  }
+}
+
+function processarDadosDashboard(items){
+  // Totais
+  const totalProp=items.length;
+  const volume=items.reduce((a,o)=>a+parseFloat(o.disbursedIssueAmount||0),0);
+  const pagas=items.filter(o=>o.status==='paid').length;
+  document.getElementById('stat-propostas').textContent=totalProp;
+  document.getElementById('stat-volume').textContent=volume>0?fmtBRL(volume):'R$ 0';
+  document.getElementById('stat-pagas').textContent=pagas;
+
+  // Agrupar por data
+  const byDate={};
+  items.forEach(op=>{
+    const dt=(op.createdAt||op.created_at||'').split('T')[0];
+    if(!dt) return;
+    if(!byDate[dt]) byDate[dt]={volume:0,qtd:0};
+    byDate[dt].volume+=parseFloat(op.disbursedIssueAmount||0);
+    byDate[dt].qtd+=1;
+  });
+  const dates=Object.keys(byDate).sort();
+  const volumes=dates.map(d=>byDate[d].volume);
+  const qtds=dates.map(d=>byDate[d].qtd);
+  const labels=dates.map(d=>{const[y,m,dd]=d.split('-');return`${dd}/${m}`;});
+
+  renderChartVolume(labels,volumes);
+  renderChartQtd(labels,qtds);
+
+  // Últimas operações no dashboard
+  const dash=document.getElementById('dash-history');
+  if(!items.length){
+    dash.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">Nenhuma operação no período</div>';
+    return;
+  }
+  dash.innerHTML=items.slice(0,8).map(op=>`
+    <div class="history-item">
+      <div class="hi-icon ${op.status==='paid'?'success':'error'}">${op.status==='paid'?'✅':'📋'}</div>
+      <div class="hi-info">
+        <div class="hi-name">${op.name||'—'}</div>
+        <div class="hi-meta">${_cpfMask(op.documentNumber||'')} • ${_statusBadge(op.status)}</div>
+      </div>
+      <div>
+        <div class="hi-amount">${op.disbursedIssueAmount?fmtBRL(op.disbursedIssueAmount):'—'}</div>
+        <div class="hi-time">${op.createdAt?new Date(op.createdAt).toLocaleDateString('pt-BR'):'—'}</div>
+      </div>
+    </div>`).join('');
+}
+
+function _chartColors(){
+  return isDark
+    ? {grid:'rgba(255,255,255,.06)',text:'#94a3b8',bar:'rgba(79,142,247,.75)',bar2:'rgba(34,197,94,.75)'}
+    : {grid:'rgba(0,0,0,.06)',text:'#475569',bar:'rgba(59,114,224,.7)',bar2:'rgba(22,163,74,.7)'};
+}
+
+function renderChartVolume(labels,data){
+  if(chartVolume){chartVolume.destroy();chartVolume=null;}
+  const ctx=document.getElementById('chart-volume').getContext('2d');
+  const c=_chartColors();
+  chartVolume=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Volume (R$)',data,
+    backgroundColor:c.bar,borderRadius:6,borderSkipped:false}]},
+    options:{responsive:true,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:ctx=>'R$ '+Number(ctx.raw).toLocaleString('pt-BR',{minimumFractionDigits:2})}}},
+      scales:{x:{grid:{color:c.grid},ticks:{color:c.text,font:{size:10}}},
+              y:{grid:{color:c.grid},ticks:{color:c.text,font:{size:10},
+                callback:v=>'R$'+Number(v).toLocaleString('pt-BR',{notation:'compact'})}}}}});
+}
+
+function renderChartQtd(labels,data){
+  if(chartQtd){chartQtd.destroy();chartQtd=null;}
+  const ctx=document.getElementById('chart-qtd').getContext('2d');
+  const c=_chartColors();
+  chartQtd=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Operações',data,
+    backgroundColor:c.bar2,borderRadius:6,borderSkipped:false}]},
+    options:{responsive:true,plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:c.grid},ticks:{color:c.text,font:{size:10}}},
+              y:{grid:{color:c.grid},ticks:{color:c.text,font:{size:10},stepSize:1}}}}});
+}
+
+// Atualizar navegação para incluir proposals
+const _setPageOrig = setPage;
+// Inicializa datas ao abrir o painel
+function initDashboardDates(){
+  const t=new Date().toISOString().split('T')[0];
+  const s=new Date();s.setDate(s.getDate()-6);
+  document.getElementById('dash-start').value=s.toISOString().split('T')[0];
+  document.getElementById('dash-end').value=t;
+  document.getElementById('prop-start').value=s.toISOString().split('T')[0];
+  document.getElementById('prop-end').value=t;
+}
 </script>
 </body>
 </html>
