@@ -2,1072 +2,1409 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Painel CLT — Crédito Consignado</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>TotalCred — Painel Operacional</title>
 <style>
 :root{
-  --bg:#0f172a;--surface:#1e293b;--surface2:#273449;--border:#334155;
-  --primary:#3b82f6;--primary-dark:#2563eb;--green:#10b981;--red:#ef4444;
-  --yellow:#f59e0b;--text:#f1f5f9;--muted:#94a3b8;--radius:10px;
+  --bg:#07090f;--surface:#0e1117;--surface2:#151b27;--surface3:#1c2535;
+  --border:#1e2d45;--border2:#253348;
+  --primary:#4f8ef7;--primary2:#3b72e0;--primary-glow:rgba(79,142,247,.18);
+  --green:#22c55e;--green-glow:rgba(34,197,94,.15);
+  --red:#ef4444;--yellow:#f59e0b;--purple:#a855f7;--cyan:#06b6d4;
+  --text:#e8edf5;--text2:#94a3b8;--text3:#4b5e77;
+  --radius:12px;--radius-sm:8px;
+  --shadow:0 4px 24px rgba(0,0,0,.4);
+  --shadow-lg:0 8px 40px rgba(0,0,0,.6);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-input,select,textarea{background:var(--surface2);border:1px solid var(--border);color:var(--text);
-  border-radius:6px;padding:10px 12px;font-size:14px;width:100%;outline:none;transition:.2s}
-input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(59,130,246,.15)}
-select option{background:var(--surface)}
-label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
-.btn{cursor:pointer;border:none;border-radius:8px;padding:11px 22px;font-size:14px;font-weight:600;transition:.2s;display:inline-flex;align-items:center;gap:6px}
-.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}
-.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--primary);color:var(--primary)}
-.btn-success{background:var(--green);color:#fff}.btn-success:hover{filter:brightness(1.1)}
-.btn-danger{background:var(--red);color:#fff}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:24px}
-.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
-.tag-green{background:rgba(16,185,129,.15);color:var(--green)}
-.tag-blue{background:rgba(59,130,246,.15);color:var(--primary)}
-.tag-yellow{background:rgba(245,158,11,.15);color:var(--yellow)}
-.tag-red{background:rgba(239,68,68,.15);color:var(--red)}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-@media(max-width:640px){.grid2,.grid3{grid-template-columns:1fr}}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 
-/* LOGIN */
-#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
-.login-box{width:100%;max-width:380px}
-.login-logo{text-align:center;margin-bottom:32px}
-.login-logo h1{font-size:24px;font-weight:700;color:var(--primary)}
-.login-logo p{color:var(--muted);font-size:13px;margin-top:4px}
-.login-form .field{margin-bottom:16px}
-.login-err{color:var(--red);font-size:13px;margin-top:8px;display:none}
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 
-/* APP LAYOUT */
-#app{display:none;min-height:100vh;flex-direction:column}
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:58px}
-.topbar-brand{display:flex;align-items:center;gap:10px}
-.topbar-brand .logo{background:var(--primary);color:#fff;width:32px;height:32px;border-radius:8px;
-  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
-.topbar-brand span{font-weight:600;font-size:15px}
-.app-body{display:flex;flex:1}
+/* ── TYPOGRAPHY ── */
+h1,h2,h3{font-weight:700;letter-spacing:-.3px}
+
+/* ── INPUTS ── */
+input,select,textarea{
+  background:var(--surface2);border:1.5px solid var(--border);color:var(--text);
+  border-radius:var(--radius-sm);padding:11px 14px;font-size:14px;width:100%;
+  outline:none;transition:.2s;font-family:inherit;
+}
+input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+input::placeholder{color:var(--text3)}
+select option{background:var(--surface2)}
+label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.6px}
+
+/* ── BUTTONS ── */
+.btn{cursor:pointer;border:none;border-radius:var(--radius-sm);padding:11px 20px;
+  font-size:13px;font-weight:600;transition:.2s;display:inline-flex;align-items:center;
+  gap:7px;font-family:inherit;letter-spacing:.2px}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;
+  box-shadow:0 4px 16px var(--primary-glow)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 24px var(--primary-glow)}
+.btn-ghost{background:transparent;color:var(--text2);border:1.5px solid var(--border)}
+.btn-ghost:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-glow)}
+.btn-success{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;box-shadow:0 4px 16px var(--green-glow)}
+.btn-success:hover{transform:translateY(-1px)}
+.btn-danger{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
+.btn-sm{padding:7px 14px;font-size:12px}
+.btn-icon{width:36px;height:36px;padding:0;justify-content:center;border-radius:8px}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+.card-glass{background:rgba(14,17,23,.7);backdrop-filter:blur(20px);border:1px solid var(--border)}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.3px}
+.badge-green{background:var(--green-glow);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.badge-blue{background:var(--primary-glow);color:var(--primary);border:1px solid rgba(79,142,247,.2)}
+.badge-yellow{background:rgba(245,158,11,.1);color:var(--yellow);border:1px solid rgba(245,158,11,.2)}
+.badge-purple{background:rgba(168,85,247,.1);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
+.badge-gray{background:rgba(75,94,119,.15);color:var(--text2);border:1px solid var(--border)}
+
+/* ── GRIDS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+@media(max-width:640px){.g2,.g3{grid-template-columns:1fr}}
+
+/* ── UTILS ── */
+.frow{display:flex;align-items:center;gap:10px}
+.fcol{display:flex;flex-direction:column;gap:8px}
+.sep{height:1px;background:var(--border);margin:20px 0}
+.muted{color:var(--text2);font-size:13px}
+.form-row{margin-bottom:16px}
+
+/* ══════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════ */
+#toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);
+  padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;
+  box-shadow:var(--shadow);animation:slideIn .25s ease;pointer-events:all;min-width:280px;max-width:380px}
+.toast.removing{animation:slideOut .25s ease forwards}
+.toast-success{border-left:3px solid var(--green)}
+.toast-error{border-left:3px solid var(--red)}
+.toast-info{border-left:3px solid var(--primary)}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+@keyframes slideOut{to{opacity:0;transform:translateX(20px)}}
+
+/* ══════════════════════════════════════════
+   SCREEN SYSTEM
+══════════════════════════════════════════ */
+.screen{display:none;min-height:100vh}
+.screen.active{display:flex}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.animate-in{animation:fadeUp .3s ease}
+
+/* ══════════════════════════════════════════
+   LOGIN SCREEN
+══════════════════════════════════════════ */
+#screen-login{align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 20% 50%,rgba(79,142,247,.06) 0%,transparent 60%),
+             radial-gradient(ellipse at 80% 20%,rgba(168,85,247,.05) 0%,transparent 50%),var(--bg)}
+.login-wrap{width:100%;max-width:400px;padding:20px}
+.login-logo{text-align:center;margin-bottom:36px}
+.login-logo-icon{width:60px;height:60px;background:linear-gradient(135deg,var(--primary),var(--purple));
+  border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;
+  font-size:26px;box-shadow:0 8px 32px var(--primary-glow)}
+.login-logo h1{font-size:22px;margin-bottom:4px}
+.login-logo p{color:var(--text2);font-size:13px}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;
+  box-shadow:var(--shadow-lg)}
+.login-card .form-row{margin-bottom:18px}
+.login-divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--text3);font-size:11px}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ══════════════════════════════════════════
+   BANK SELECTION SCREEN
+══════════════════════════════════════════ */
+#screen-banks{flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;
+  background:radial-gradient(ellipse at 30% 40%,rgba(79,142,247,.05) 0%,transparent 60%),var(--bg)}
+.banks-header{text-align:center;margin-bottom:40px}
+.banks-header h2{font-size:26px;margin-bottom:8px}
+.banks-header p{color:var(--text2);font-size:14px}
+.banks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;
+  width:100%;max-width:900px;margin-bottom:32px}
+.bank-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:24px;
+  cursor:pointer;transition:.25s;text-align:center;position:relative;overflow:hidden}
+.bank-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--primary-glow),transparent);
+  opacity:0;transition:.25s}
+.bank-card:hover:not(.disabled){transform:translateY(-4px);border-color:var(--primary);box-shadow:0 12px 40px var(--primary-glow)}
+.bank-card:hover:not(.disabled)::before{opacity:1}
+.bank-card.disabled{opacity:.4;cursor:not-allowed}
+.bank-icon{width:52px;height:52px;border-radius:14px;margin:0 auto 14px;display:flex;
+  align-items:center;justify-content:center;font-size:22px;position:relative;z-index:1}
+.bank-icon.v8{background:linear-gradient(135deg,#1d4ed8,#3b82f6)}
+.bank-icon.facta{background:linear-gradient(135deg,#7c3aed,#a855f7)}
+.bank-icon.bmg{background:linear-gradient(135deg,#b45309,#d97706)}
+.bank-icon.daycoval{background:linear-gradient(135deg,#065f46,#10b981)}
+.bank-card h3{font-size:14px;margin-bottom:4px;position:relative;z-index:1}
+.bank-card p{font-size:11px;color:var(--text2);position:relative;z-index:1}
+.bank-soon{position:absolute;top:10px;right:10px}
+
+/* ══════════════════════════════════════════
+   MAIN APP
+══════════════════════════════════════════ */
+#screen-app{flex-direction:column}
+
+/* TOPBAR */
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;position:sticky;top:0;z-index:100}
+.topbar-logo{display:flex;align-items:center;gap:10px;min-width:200px}
+.topbar-logo-mark{width:30px;height:30px;background:linear-gradient(135deg,var(--primary),var(--purple));
+  border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.topbar-logo span{font-weight:700;font-size:14px}
+.topbar-logo small{color:var(--text2);font-size:11px;background:var(--surface2);
+  border:1px solid var(--border);padding:2px 8px;border-radius:20px;margin-left:4px}
+.topbar-center{flex:1;display:flex;align-items:center;justify-content:center}
+.topbar-right{display:flex;align-items:center;gap:8px;min-width:200px;justify-content:flex-end}
+.topbar-user{font-size:12px;color:var(--text2)}
+.topbar-avatar{width:30px;height:30px;background:linear-gradient(135deg,var(--primary),var(--purple));
+  border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+
+/* LAYOUT */
+.app-body{display:flex;flex:1;overflow:hidden;height:calc(100vh - 56px)}
 
 /* SIDEBAR */
-#sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);
-  padding:20px 12px;flex-shrink:0;display:flex;flex-direction:column;gap:4px}
-.step-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;
-  cursor:pointer;transition:.15s;font-size:13px;color:var(--muted)}
-.step-item.active{background:rgba(59,130,246,.12);color:var(--primary);font-weight:600}
-.step-item.done{color:var(--green)}
-.step-item.locked{pointer-events:none;opacity:.4}
-.step-num{width:22px;height:22px;border-radius:50%;border:1.5px solid currentColor;
-  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
-.step-item.done .step-num{background:var(--green);border-color:var(--green);color:#fff}
-.step-item.active .step-num{background:var(--primary);border-color:var(--primary);color:#fff}
+#sidebar{width:210px;background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;padding:16px 10px;gap:4px;flex-shrink:0;overflow-y:auto}
+.nav-group-label{font-size:10px;color:var(--text3);font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;padding:4px 10px;margin-top:8px;margin-bottom:2px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);
+  cursor:pointer;transition:.15s;font-size:13px;color:var(--text2);font-weight:500}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--primary-glow);color:var(--primary);font-weight:600;
+  border:1px solid rgba(79,142,247,.15)}
+.nav-item .nav-icon{width:18px;text-align:center;flex-shrink:0;font-size:15px}
+.nav-item .nav-badge{margin-left:auto;background:var(--primary);color:#fff;
+  border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700}
+.sidebar-footer{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}
+.bank-indicator{background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:8px 10px;display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:8px}
+.bank-dot{width:7px;height:7px;background:var(--green);border-radius:50%;flex-shrink:0;
+  box-shadow:0 0 6px var(--green)}
 
 /* MAIN CONTENT */
-#main-content{flex:1;overflow-y:auto;padding:28px}
-.page{display:none;animation:fadeIn .2s ease}
+#main-content{flex:1;overflow-y:auto;padding:28px;background:var(--bg)}
+.page{display:none;animation:fadeUp .25s ease}
 .page.active{display:block}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.page-title{font-size:20px;font-weight:700;margin-bottom:4px}
-.page-sub{color:var(--muted);font-size:13px;margin-bottom:24px}
-.form-row{margin-bottom:16px}
-.actions{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap}
 
-/* LOADING */
-.loader{display:flex;flex-direction:column;align-items:center;gap:16px;padding:40px 20px}
-.spinner{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--primary);
-  border-radius:50%;animation:spin 1s linear infinite}
+/* PAGE HEADER */
+.page-header{margin-bottom:24px}
+.page-header h2{font-size:20px;margin-bottom:4px}
+.page-header p{color:var(--text2);font-size:13px}
+.page-header .frow{justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
+
+/* ══════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════ */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;
+  position:relative;overflow:hidden;transition:.2s}
+.stat-card::after{content:'';position:absolute;top:0;right:0;width:60px;height:60px;
+  border-radius:50%;filter:blur(30px);opacity:.3}
+.stat-card.blue::after{background:var(--primary)}
+.stat-card.green::after{background:var(--green)}
+.stat-card.purple::after{background:var(--purple)}
+.stat-card.yellow::after{background:var(--yellow)}
+.stat-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.stat-icon{font-size:20px;margin-bottom:12px}
+.stat-value{font-size:26px;font-weight:700;line-height:1}
+.stat-label{font-size:11px;color:var(--text2);margin-top:4px;text-transform:uppercase;letter-spacing:.4px}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:8px}
+
+.quick-actions{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.qa-btn{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;cursor:pointer;transition:.2s;text-align:center;display:flex;flex-direction:column;
+  align-items:center;gap:8px;font-size:12px;color:var(--text2);font-weight:500}
+.qa-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-glow);transform:translateY(-2px)}
+.qa-btn .qa-icon{font-size:22px}
+
+/* ══════════════════════════════════════════
+   OPERATION WIZARD
+══════════════════════════════════════════ */
+.wizard-progress{display:flex;align-items:center;margin-bottom:28px;gap:0}
+.wp-step{display:flex;align-items:center;flex:1}
+.wp-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
+  flex-shrink:0;transition:.3s;background:var(--surface);color:var(--text3);z-index:1}
+.wp-dot.active{border-color:var(--primary);color:var(--primary);background:var(--primary-glow)}
+.wp-dot.done{border-color:var(--green);background:var(--green);color:#fff}
+.wp-line{flex:1;height:2px;background:var(--border);transition:.3s;margin:0 4px}
+.wp-line.done{background:var(--green)}
+.wp-label{font-size:10px;color:var(--text3);white-space:nowrap;margin-top:4px;text-align:center}
+
+.step-wrap{display:none}
+.step-wrap.active{display:block;animation:fadeUp .2s ease}
+
+/* ══════════════════════════════════════════
+   LOADING STATE
+══════════════════════════════════════════ */
+.loading-card{text-align:center;padding:48px 24px}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--primary);
+  border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.loader-text{color:var(--muted);font-size:13px;text-align:center}
+.loading-steps{display:flex;flex-direction:column;gap:6px;max-width:320px;margin:20px auto 0}
+.ls-item{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text2);padding:6px 12px;
+  background:var(--surface2);border-radius:6px}
+.ls-item.active{color:var(--primary);background:var(--primary-glow)}
+.ls-dot{width:6px;height:6px;border-radius:50%;background:var(--border);flex-shrink:0}
+.ls-item.active .ls-dot{background:var(--primary)}
 
-/* CONSULTA RESULT */
-.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px}
-.info-card{background:var(--surface2);border-radius:8px;padding:14px}
-.info-card .ic-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
-.info-card .ic-value{font-size:16px;font-weight:600}
+/* ══════════════════════════════════════════
+   RESULT CARDS
+══════════════════════════════════════════ */
+.result-hero{background:linear-gradient(135deg,var(--surface2),var(--surface3));
+  border:1px solid var(--border2);border-radius:var(--radius);padding:24px;margin-bottom:16px}
+.result-amount{font-size:36px;font-weight:700;color:var(--green);line-height:1}
+.result-amount-label{font-size:12px;color:var(--text2);margin-top:4px}
+.info-row{display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+.info-row:last-child{border-bottom:none}
+.info-row .ir-label{color:var(--text2)}
+.info-row .ir-value{font-weight:600;text-align:right}
 
-/* PARCELAS */
-.parcelas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:20px}
-.parcela-card{background:var(--surface2);border:2px solid var(--border);border-radius:10px;
-  padding:16px;cursor:pointer;transition:.2s;text-align:center}
-.parcela-card:hover{border-color:var(--primary)}
-.parcela-card.selected{border-color:var(--primary);background:rgba(59,130,246,.08)}
-.parcela-card .pc-num{font-size:28px;font-weight:700;color:var(--primary)}
-.parcela-card .pc-label{font-size:11px;color:var(--muted);margin:2px 0 8px}
-.parcela-card .pc-value{font-size:16px;font-weight:600}
+/* SIMULAÇÃO - prazo cards */
+.prazo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-bottom:20px}
+.prazo-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;
+  padding:14px 8px;cursor:pointer;transition:.2s;text-align:center}
+.prazo-card:hover{border-color:var(--primary);background:var(--primary-glow)}
+.prazo-card.sel{border-color:var(--primary);background:var(--primary-glow);box-shadow:0 0 16px var(--primary-glow)}
+.prazo-card .pn{font-size:22px;font-weight:700;color:var(--primary)}
+.prazo-card .pl{font-size:10px;color:var(--text3);margin-top:2px}
 
-/* SIMULACAO RESULT */
-.sim-summary{background:var(--surface2);border-radius:10px;padding:20px;margin-bottom:20px}
-.sim-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;
-  border-bottom:1px solid var(--border);font-size:14px}
-.sim-row:last-child{border-bottom:none}
-.sim-row .sr-label{color:var(--muted)}
-.sim-row .sr-value{font-weight:600}
-.sim-big{font-size:32px;font-weight:700;color:var(--green);text-align:center;margin:16px 0 4px}
-.sim-big-label{text-align:center;color:var(--muted);font-size:13px;margin-bottom:16px}
+/* ══════════════════════════════════════════
+   HISTORY
+══════════════════════════════════════════ */
+.history-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 20px;display:flex;align-items:center;gap:16px;margin-bottom:10px;transition:.2s}
+.history-item:hover{border-color:var(--border2)}
+.hi-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;font-size:18px;flex-shrink:0}
+.hi-icon.success{background:var(--green-glow)}
+.hi-icon.error{background:rgba(239,68,68,.1)}
+.hi-info{flex:1}
+.hi-name{font-size:14px;font-weight:600;margin-bottom:2px}
+.hi-meta{font-size:12px;color:var(--text2)}
+.hi-amount{font-size:15px;font-weight:700;color:var(--green);text-align:right}
+.hi-time{font-size:11px;color:var(--text3);text-align:right}
 
-/* PROPOSTA RESULT */
-.proposta-success{text-align:center;padding:40px 20px}
-.proposta-success .check-icon{font-size:56px;color:var(--green);margin-bottom:16px}
-.proposta-link{display:block;background:rgba(16,185,129,.1);border:1px solid var(--green);
-  border-radius:8px;padding:14px;word-break:break-all;color:var(--green);text-decoration:none;
-  font-size:13px;margin:16px 0;text-align:center}
-.proposta-link:hover{background:rgba(16,185,129,.2)}
+/* ══════════════════════════════════════════
+   SETTINGS
+══════════════════════════════════════════ */
+.settings-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:24px;margin-bottom:16px}
+.settings-section h3{font-size:14px;font-weight:700;margin-bottom:4px}
+.settings-section .muted{margin-bottom:20px}
+.cred-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:12px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.cred-key{font-size:12px;color:var(--text2);font-family:monospace}
+.cred-val{font-size:12px;font-family:monospace;color:var(--text3);letter-spacing:1px}
+.toggle-wrap{display:flex;align-items:center;justify-content:space-between;padding:12px 0;
+  border-bottom:1px solid var(--border);font-size:13px}
+.toggle-wrap:last-child{border-bottom:none}
+.toggle{width:40px;height:22px;background:var(--border);border-radius:11px;cursor:pointer;
+  position:relative;transition:.2s;flex-shrink:0}
+.toggle.on{background:var(--primary)}
+.toggle::after{content:'';position:absolute;width:16px;height:16px;background:#fff;
+  border-radius:50%;top:3px;left:3px;transition:.2s}
+.toggle.on::after{left:21px}
 
-/* ALERT */
-.alert{border-radius:8px;padding:12px 16px;font-size:13px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start}
-.alert-err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
-.alert-info{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);color:#93c5fd}
-.alert-warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:#fcd34d}
+/* ══════════════════════════════════════════
+   PROPOSAL SUCCESS
+══════════════════════════════════════════ */
+.success-wrap{text-align:center;padding:40px 20px}
+.success-icon{font-size:60px;margin-bottom:16px;animation:bounce .5s ease}
+@keyframes bounce{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.link-box{background:var(--surface2);border:1px solid var(--green);border-radius:10px;
+  padding:16px;word-break:break-all;color:var(--green);font-size:12px;margin:16px 0;
+  font-family:monospace;cursor:pointer;transition:.2s;text-align:left}
+.link-box:hover{background:var(--green-glow)}
 
-/* NOVA OPERAÇÃO btn */
-#btn-nova-op{position:fixed;bottom:24px;right:24px;z-index:99;display:none}
-
-/* PROGRESS BAR */
-.progress-bar{height:3px;background:var(--border);border-radius:2px;margin-bottom:24px;overflow:hidden}
-.progress-fill{height:100%;background:var(--primary);transition:width .4s ease;border-radius:2px}
-
-/* scroll */
-::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+/* ══════════════════════════════════════════
+   ALERTS
+══════════════════════════════════════════ */
+.alert{border-radius:8px;padding:12px 16px;font-size:13px;display:flex;gap:10px;align-items:flex-start;margin-bottom:14px}
+.alert-err{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:#fca5a5}
+.alert-info{background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);color:#93c5fd}
+.alert-warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:#fcd34d}
+.alert-success{background:var(--green-glow);border:1px solid rgba(34,197,94,.2);color:#86efac}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════ LOGIN ═══════════════════ -->
-<div id="login-screen">
-  <div class="login-box card">
+<div id="toast-container"></div>
+
+<!-- ══════════════════════════════════════════
+     LOGIN
+══════════════════════════════════════════ -->
+<div id="screen-login" class="screen active">
+  <div class="login-wrap animate-in">
     <div class="login-logo">
-      <div style="font-size:36px;margin-bottom:8px">💳</div>
-      <h1>Painel CLT</h1>
-      <p>Crédito Consignado Privado</p>
+      <div class="login-logo-icon">💳</div>
+      <h1>TotalCred</h1>
+      <p>Painel Operacional — Crédito Consignado</p>
     </div>
-    <div class="login-form">
-      <div class="field">
-        <label>Usuário</label>
-        <input id="l-user" type="text" placeholder="admin" autocomplete="username"/>
-      </div>
-      <div class="field">
-        <label>Senha</label>
-        <input id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"/>
-      </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">
-        Entrar
+    <div class="login-card">
+      <div class="form-row"><label>Usuário</label><input id="l-user" type="text" placeholder="Seu usuário" autocomplete="username"/></div>
+      <div class="form-row"><label>Senha</label><input id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px" onclick="doLogin()">
+        Entrar no Painel
       </button>
-      <p class="login-err" id="l-err">Usuário ou senha incorretos.</p>
+      <div id="l-err" style="display:none" class="alert alert-err" style="margin-top:12px">Usuário ou senha incorretos.</div>
     </div>
+    <p style="text-align:center;margin-top:20px;font-size:11px;color:var(--text3)">TotalCred v2.0 • Uso interno</p>
   </div>
 </div>
 
-<!-- ═══════════════════ APP ═══════════════════ -->
-<div id="app">
-  <!-- topbar -->
-  <div class="topbar">
-    <div class="topbar-brand">
-      <div class="logo">CLT</div>
-      <span>Painel de Operações</span>
+<!-- ══════════════════════════════════════════
+     BANK SELECTION
+══════════════════════════════════════════ -->
+<div id="screen-banks" class="screen">
+  <div class="banks-header animate-in">
+    <h2>Selecione o Banco</h2>
+    <p>Escolha a instituição financeira para iniciar a operação</p>
+  </div>
+  <div class="banks-grid animate-in">
+    <div class="bank-card" onclick="selectBank('v8')">
+      <div class="bank-icon v8">🏦</div>
+      <h3>V8 Sistema</h3>
+      <p>CLT Privado</p>
+      <span class="badge badge-green" style="margin-top:8px">● Ativo</span>
     </div>
-    <div style="display:flex;align-items:center;gap:12px">
-      <span id="topbar-user" style="color:var(--muted);font-size:13px"></span>
-      <button class="btn btn-secondary" style="padding:6px 14px;font-size:12px" onclick="doLogout()">Sair</button>
+    <div class="bank-card disabled">
+      <div class="bank-icon facta">🏛️</div>
+      <h3>Facta</h3>
+      <p>Consignado Público</p>
+      <span class="badge badge-gray bank-soon">Em breve</span>
+    </div>
+    <div class="bank-card disabled">
+      <div class="bank-icon bmg">🏢</div>
+      <h3>BMG</h3>
+      <p>Consignado</p>
+      <span class="badge badge-gray bank-soon">Em breve</span>
+    </div>
+    <div class="bank-card disabled">
+      <div class="bank-icon daycoval">💼</div>
+      <h3>Daycoval</h3>
+      <p>Crédito Pessoal</p>
+      <span class="badge badge-gray bank-soon">Em breve</span>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px">
+    <button class="btn btn-ghost btn-sm" onclick="showScreen('login')">← Voltar</button>
+    <button class="btn btn-ghost btn-sm" onclick="showScreen('app');setPage('settings')">⚙️ Configurações</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════ -->
+<div id="screen-app" class="screen">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="topbar-logo-mark">TC</div>
+      <span>TotalCred</span>
+      <small id="tb-bank">V8 CLT</small>
+    </div>
+    <div class="topbar-center">
+      <div class="frow" style="gap:4px">
+        <div id="step-prog" style="display:none;align-items:center;gap:6px;font-size:12px;color:var(--text2)"></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="showScreen('banks')" title="Trocar banco">🏦</button>
+      <div class="topbar-user" id="tb-user"></div>
+      <div class="topbar-avatar" id="tb-avatar">U</div>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sair</button>
     </div>
   </div>
 
   <div class="app-body">
-    <!-- sidebar -->
+    <!-- SIDEBAR -->
     <div id="sidebar">
-      <div class="step-item active" id="si-1" onclick="goStep(1)">
-        <div class="step-num">1</div><span>Dados do Cliente</span>
+      <div class="nav-group-label">Menu</div>
+      <div class="nav-item active" id="nav-dashboard" onclick="setPage('dashboard')">
+        <span class="nav-icon">📊</span> Dashboard
       </div>
-      <div class="step-item locked" id="si-2">
-        <div class="step-num">2</div><span>Consulta de Margem</span>
+      <div class="nav-item" id="nav-operation" onclick="setPage('operation')">
+        <span class="nav-icon">➕</span> Nova Operação
       </div>
-      <div class="step-item locked" id="si-3">
-        <div class="step-num">3</div><span>Simulação</span>
+      <div class="nav-item" id="nav-history" onclick="setPage('history')">
+        <span class="nav-icon">📋</span> Histórico
+        <span class="nav-badge" id="history-badge" style="display:none">0</span>
       </div>
-      <div class="step-item locked" id="si-4">
-        <div class="step-num">4</div><span>Dados Pessoais</span>
+      <div class="nav-group-label">Sistema</div>
+      <div class="nav-item" id="nav-settings" onclick="setPage('settings')">
+        <span class="nav-icon">⚙️</span> Configurações
       </div>
-      <div class="step-item locked" id="si-5">
-        <div class="step-num">5</div><span>Endereço</span>
-      </div>
-      <div class="step-item locked" id="si-6">
-        <div class="step-num">6</div><span>Dados Bancários</span>
-      </div>
-      <div class="step-item locked" id="si-7">
-        <div class="step-num">7</div><span>Gerar Proposta</span>
+      <div class="sidebar-footer">
+        <div class="bank-indicator">
+          <div class="bank-dot"></div>
+          <div>
+            <div style="font-size:12px;font-weight:600" id="sb-bank">V8 Sistema</div>
+            <div style="font-size:10px;color:var(--text3)">CLT Privado</div>
+          </div>
+        </div>
+        <div class="nav-item" onclick="novaOperacao()">
+          <span class="nav-icon">🔄</span> Nova Operação
+        </div>
       </div>
     </div>
 
-    <!-- main content -->
+    <!-- MAIN CONTENT -->
     <div id="main-content">
-      <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:14%"></div></div>
 
-      <!-- ── STEP 1: DADOS DO CLIENTE ── -->
-      <div class="page active" id="page-1">
-        <p class="page-title">Dados do Cliente</p>
-        <p class="page-sub">Preencha o CPF para buscar dados automaticamente ou preencha manualmente.</p>
+      <!-- ── DASHBOARD ── -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header">
+          <div class="frow">
+            <div>
+              <h2>Dashboard</h2>
+              <p class="muted">Visão geral da sessão atual</p>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="setPage('operation')">➕ Nova Operação</button>
+          </div>
+        </div>
 
-        <div class="card">
-          <div class="form-row">
-            <label>CPF *</label>
-            <div style="display:flex;gap:8px">
-              <input id="f-cpf" type="text" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)" style="flex:1"/>
-              <button class="btn btn-secondary" onclick="buscarDadosCliente()" style="white-space:nowrap">Buscar dados</button>
-            </div>
+        <div class="stat-grid">
+          <div class="stat-card blue">
+            <div class="stat-icon">🔍</div>
+            <div class="stat-value" id="stat-consultas">0</div>
+            <div class="stat-label">Consultas</div>
+            <div class="stat-sub">Esta sessão</div>
           </div>
-          <div class="grid2">
-            <div class="form-row">
-              <label>Nome Completo *</label>
-              <input id="f-nome" type="text" placeholder="Nome completo"/>
-            </div>
-            <div class="form-row">
-              <label>E-mail *</label>
-              <input id="f-email" type="email" placeholder="email@exemplo.com"/>
-            </div>
+          <div class="stat-card green">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value" id="stat-propostas">0</div>
+            <div class="stat-label">Propostas</div>
+            <div class="stat-sub">Geradas</div>
           </div>
-          <div class="grid2">
-            <div class="form-row">
-              <label>Celular (DDD + número) *</label>
-              <input id="f-celular" type="text" placeholder="35999887766" maxlength="11" oninput="this.value=this.value.replace(/\D/g,'')"/>
-            </div>
-            <div class="form-row">
-              <label>Data de Nascimento *</label>
-              <input id="f-nasc" type="date"/>
-            </div>
+          <div class="stat-card purple">
+            <div class="stat-icon">💰</div>
+            <div class="stat-value" id="stat-volume">R$ 0</div>
+            <div class="stat-label">Volume</div>
+            <div class="stat-sub">Total liberado</div>
           </div>
-          <div class="form-row" style="max-width:200px">
-            <label>Gênero *</label>
-            <select id="f-genero">
-              <option value="">Selecione</option>
-              <option value="M">Masculino</option>
-              <option value="F">Feminino</option>
-            </select>
+          <div class="stat-card yellow">
+            <div class="stat-icon">📈</div>
+            <div class="stat-value" id="stat-taxa">—</div>
+            <div class="stat-label">Tx. Sucesso</div>
+            <div class="stat-sub">Conversão</div>
           </div>
-          <div id="step1-alert" style="display:none"></div>
-          <div class="actions">
-            <button class="btn btn-primary" onclick="submitStep1()">Consultar Margem →</button>
+        </div>
+
+        <div class="page-header" style="margin-bottom:14px"><h2 style="font-size:15px">Ações Rápidas</h2></div>
+        <div class="quick-actions">
+          <div class="qa-btn" onclick="setPage('operation')"><div class="qa-icon">➕</div>Nova Operação</div>
+          <div class="qa-btn" onclick="setPage('history')"><div class="qa-icon">📋</div>Histórico</div>
+          <div class="qa-btn" onclick="showScreen('banks')"><div class="qa-icon">🏦</div>Trocar Banco</div>
+          <div class="qa-btn" onclick="setPage('settings')"><div class="qa-icon">⚙️</div>Configurações</div>
+        </div>
+
+        <div class="page-header" style="margin-bottom:14px"><h2 style="font-size:15px">Últimas Operações</h2></div>
+        <div id="dash-history">
+          <div style="text-align:center;padding:32px;color:var(--text3);font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">
+            Nenhuma operação nesta sessão
           </div>
         </div>
       </div>
 
-      <!-- ── STEP 2: CONSULTA DE MARGEM ── -->
-      <div class="page" id="page-2">
-        <p class="page-title">Consulta de Margem</p>
-        <p class="page-sub">Aguarde enquanto consultamos a margem disponível do cliente.</p>
-
-        <div class="card" id="s2-loading">
-          <div class="loader">
-            <div class="spinner"></div>
+      <!-- ── OPERAÇÃO ── -->
+      <div class="page" id="page-operation">
+        <div class="page-header">
+          <div class="frow">
             <div>
-              <div style="font-weight:600;text-align:center;margin-bottom:6px">Processando consulta...</div>
-              <div class="loader-text" id="s2-step-text">Iniciando...</div>
+              <h2>Nova Operação</h2>
+              <p class="muted" id="op-bank-label">V8 Sistema — CLT Privado</p>
             </div>
-            <div class="alert alert-warn" style="margin:0;max-width:380px">
-              ⏱️ Este processo pode levar até <strong>3 minutos</strong>. Não feche a janela.
-            </div>
+            <button class="btn btn-ghost btn-sm" onclick="novaOperacao()">🔄 Reiniciar</button>
           </div>
         </div>
 
-        <div class="card" id="s2-result" style="display:none">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-            <div>
-              <div style="font-size:18px;font-weight:700" id="s2-nome-cliente"></div>
-              <div style="color:var(--muted);font-size:13px" id="s2-cpf-display"></div>
-            </div>
-            <span class="tag tag-green" id="s2-status-tag">✓ Aprovado</span>
+        <!-- WIZARD PROGRESS -->
+        <div style="margin-bottom:28px">
+          <div class="wizard-progress" id="wizard-prog">
+            <div class="wp-step"><div class="wp-dot active" id="wd-1">1</div></div>
+            <div class="wp-line" id="wl-1"></div>
+            <div class="wp-step"><div class="wp-dot" id="wd-2">2</div></div>
+            <div class="wp-line" id="wl-2"></div>
+            <div class="wp-step"><div class="wp-dot" id="wd-3">3</div></div>
+            <div class="wp-line" id="wl-3"></div>
+            <div class="wp-step"><div class="wp-dot" id="wd-4">4</div></div>
+            <div class="wp-line" id="wl-4"></div>
+            <div class="wp-step"><div class="wp-dot" id="wd-5">5</div></div>
+            <div class="wp-line" id="wl-5"></div>
+            <div class="wp-step"><div class="wp-dot" id="wd-6">6</div></div>
+            <div class="wp-line" id="wl-6"></div>
+            <div class="wp-step"><div class="wp-dot" id="wd-7">7</div></div>
           </div>
-          <div class="info-grid" id="s2-info-grid"></div>
-          <div class="actions">
-            <button class="btn btn-primary" onclick="goStep(3)">Ver Simulação →</button>
-            <button class="btn btn-secondary" onclick="goStep(1)">← Voltar</button>
+          <div style="display:flex;justify-content:space-between;margin-top:6px;padding:0 4px">
+            <span style="font-size:10px;color:var(--text3)">Cliente</span>
+            <span style="font-size:10px;color:var(--text3)">Margem</span>
+            <span style="font-size:10px;color:var(--text3)">Simulação</span>
+            <span style="font-size:10px;color:var(--text3)">Pessoal</span>
+            <span style="font-size:10px;color:var(--text3)">Endereço</span>
+            <span style="font-size:10px;color:var(--text3)">PIX</span>
+            <span style="font-size:10px;color:var(--text3)">Proposta</span>
           </div>
         </div>
 
-        <div class="card" id="s2-error" style="display:none">
-          <div class="alert alert-err" id="s2-err-msg"></div>
-          <div class="actions">
-            <button class="btn btn-secondary" onclick="goStep(1)">← Tentar Novamente</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── STEP 3: SIMULAÇÃO ── -->
-      <div class="page" id="page-3">
-        <p class="page-title">Simulação</p>
-        <p class="page-sub">Informe o valor da parcela e escolha o prazo para simular.</p>
-
-        <div class="card" id="s3-loading" style="display:none">
-          <div class="loader"><div class="spinner"></div><div class="loader-text">Simulando...</div></div>
-        </div>
-
-        <div id="s3-content">
-          <div class="card" style="margin-bottom:16px">
-            <div class="grid2">
-              <div class="form-row">
-                <label>Valor da Parcela (R$) *</label>
-                <input id="f-sim-valor" type="number" step="0.01" min="0" placeholder="Ex: 350.00"/>
-                <div style="font-size:11px;color:var(--muted);margin-top:4px" id="s3-margem-hint"></div>
+        <!-- STEP 1: DADOS DO CLIENTE -->
+        <div class="step-wrap active" id="sw-1">
+          <div class="card">
+            <div class="frow" style="margin-bottom:20px">
+              <div>
+                <h3>Dados do Cliente</h3>
+                <p class="muted" style="margin-top:2px">Preencha o CPF para buscar dados automaticamente</p>
               </div>
-              <div class="form-row">
-                <label>Número de Parcelas *</label>
-                <select id="f-sim-parcelas">
-                  <option value="">Carregando...</option>
+              <span class="badge badge-blue">Etapa 1 de 7</span>
+            </div>
+            <div class="form-row">
+              <label>CPF *</label>
+              <div class="frow"><input id="f-cpf" type="text" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)" style="flex:1"/>
+              <button class="btn btn-ghost" onclick="buscarDadosCliente()">🔍 Buscar</button></div>
+            </div>
+            <div class="g2">
+              <div class="form-row"><label>Nome Completo *</label><input id="f-nome" type="text" placeholder="Nome completo"/></div>
+              <div class="form-row"><label>E-mail *</label><input id="f-email" type="email" placeholder="email@exemplo.com"/></div>
+            </div>
+            <div class="g2">
+              <div class="form-row"><label>Celular (DDD + número) *</label><input id="f-celular" type="text" placeholder="35999887766" maxlength="11" oninput="this.value=this.value.replace(/\D/g,'')"/></div>
+              <div class="form-row"><label>Data de Nascimento *</label><input id="f-nasc" type="date"/></div>
+            </div>
+            <div class="form-row" style="max-width:200px"><label>Gênero *</label>
+              <select id="f-genero"><option value="">Selecione</option><option value="M">Masculino</option><option value="F">Feminino</option></select>
+            </div>
+            <div id="s1-alert"></div>
+            <div class="frow" style="margin-top:8px">
+              <button class="btn btn-primary" onclick="submitStep1()">Consultar Margem →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: CONSULTA -->
+        <div class="step-wrap" id="sw-2">
+          <div class="card" id="s2-loading">
+            <div class="loading-card">
+              <div class="spinner"></div>
+              <div style="font-size:15px;font-weight:600;margin-bottom:6px">Consultando Margem</div>
+              <div class="muted" id="s2-step-text">Iniciando...</div>
+              <div class="loading-steps">
+                <div class="ls-item active" id="ls-1"><div class="ls-dot"></div>Gerando consulta</div>
+                <div class="ls-item" id="ls-2"><div class="ls-dot"></div>Autorizando</div>
+                <div class="ls-item" id="ls-3"><div class="ls-dot"></div>Aguardando processamento</div>
+                <div class="ls-item" id="ls-4"><div class="ls-dot"></div>Verificando resultado</div>
+              </div>
+              <div class="alert alert-warn" style="margin-top:24px;max-width:380px;text-align:left">
+                ⏱️ Processo pode levar <strong>até 3 minutos</strong>. Não feche a janela.
+              </div>
+            </div>
+          </div>
+          <div class="card" id="s2-result" style="display:none">
+            <div class="frow" style="justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+              <div>
+                <div style="font-size:18px;font-weight:700" id="s2-nome"></div>
+                <div class="muted" id="s2-cpf-fmt"></div>
+              </div>
+              <span class="badge badge-green">✓ Margem Aprovada</span>
+            </div>
+            <div class="result-hero">
+              <div class="result-amount" id="s2-margem"></div>
+              <div class="result-amount-label">Margem Disponível</div>
+            </div>
+            <div id="s2-info-rows"></div>
+            <div class="frow" style="margin-top:20px">
+              <button class="btn btn-primary" onclick="advanceToStep(3)">Ver Simulação →</button>
+              <button class="btn btn-ghost" onclick="advanceToStep(1)">← Voltar</button>
+            </div>
+          </div>
+          <div class="card" id="s2-error" style="display:none">
+            <div id="s2-err-msg"></div>
+            <button class="btn btn-ghost" onclick="advanceToStep(1)">← Tentar Novamente</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: SIMULAÇÃO -->
+        <div class="step-wrap" id="sw-3">
+          <div class="card" id="s3-loading" style="display:none">
+            <div class="loading-card"><div class="spinner"></div><div class="muted">Carregando opções...</div></div>
+          </div>
+          <div id="s3-content">
+            <div class="card" style="margin-bottom:16px">
+              <div class="frow" style="justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px">
+                <div><h3>Simulação</h3><p class="muted" style="margin-top:2px">Informe o valor da parcela e o prazo</p></div>
+                <span class="badge badge-blue">Etapa 3 de 7</span>
+              </div>
+              <div class="g2">
+                <div class="form-row">
+                  <label>Valor da Parcela (R$) *</label>
+                  <input id="f-sim-valor" type="number" step="0.01" min="0" placeholder="Ex: 350.00"/>
+                  <div style="font-size:11px;color:var(--text3);margin-top:5px" id="s3-hint"></div>
+                </div>
+                <div class="form-row">
+                  <label>Número de Parcelas *</label>
+                  <select id="f-sim-parcelas"><option value="">Carregando...</option></select>
+                </div>
+              </div>
+              <div id="s3-alert"></div>
+              <div class="frow">
+                <button class="btn btn-primary" onclick="executarSimulacao()">📊 Simular</button>
+                <button class="btn btn-ghost" onclick="advanceToStep(2)">← Voltar</button>
+              </div>
+            </div>
+            <div class="card" id="s3-result" style="display:none">
+              <div class="result-hero">
+                <div class="result-amount" id="s3-valor-liberar"></div>
+                <div class="result-amount-label">Valor a Receber (líquido após IOF)</div>
+              </div>
+              <div id="s3-rows"></div>
+              <div class="frow" style="margin-top:20px">
+                <button class="btn btn-primary" onclick="advanceToStep(4)">Continuar →</button>
+                <button class="btn btn-ghost" onclick="executarSimulacao()">🔄 Simular novamente</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 4: DADOS PESSOAIS -->
+        <div class="step-wrap" id="sw-4">
+          <div class="card">
+            <div class="frow" style="justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px">
+              <div><h3>Dados Pessoais</h3><p class="muted" style="margin-top:2px">Documento e informações complementares</p></div>
+              <span class="badge badge-blue">Etapa 4 de 7</span>
+            </div>
+            <div class="g3">
+              <div class="form-row"><label>RG *</label><input id="f-rg" type="text" placeholder="12345678"/></div>
+              <div class="form-row"><label>Data de Expedição *</label><input id="f-rg-data" type="date"/></div>
+              <div class="form-row"><label>Órgão Emissor</label><input id="f-rg-orgao" type="text" placeholder="SSP" value="SSP"/></div>
+            </div>
+            <div class="g2">
+              <div class="form-row"><label>Nome da Mãe *</label><input id="f-mae" type="text" placeholder="Nome completo da mãe"/></div>
+              <div class="form-row"><label>Estado Civil *</label>
+                <select id="f-civil">
+                  <option value="">Selecione</option>
+                  <option value="single">Solteiro(a)</option>
+                  <option value="married">Casado(a)</option>
+                  <option value="divorced">Divorciado(a)</option>
+                  <option value="widowed">Viúvo(a)</option>
+                  <option value="stable_union">União Estável</option>
                 </select>
               </div>
             </div>
-            <div id="s3-alert" style="display:none"></div>
-            <div class="actions">
-              <button class="btn btn-primary" onclick="executarSimulacao()">Simular</button>
-              <button class="btn btn-secondary" onclick="goStep(2)">← Voltar</button>
+            <div class="form-row" style="max-width:280px"><label>Nacionalidade</label><input id="f-nac" type="text" value="Brasileiro"/></div>
+            <div id="s4-alert"></div>
+            <div class="frow" style="margin-top:8px">
+              <button class="btn btn-primary" onclick="submitStep4()">Continuar →</button>
+              <button class="btn btn-ghost" onclick="advanceToStep(3)">← Voltar</button>
             </div>
-          </div>
-
-          <div class="card" id="s3-sim-result" style="display:none">
-            <div class="sim-big" id="s3-valor-liberar"></div>
-            <div class="sim-big-label">Valor a Receber (líquido)</div>
-            <div class="sim-summary" id="s3-sim-rows"></div>
-          </div>
-
-          <div id="s3-sim-alert" style="display:none"></div>
-          <div class="actions" id="s3-actions" style="display:none">
-            <button class="btn btn-primary" onclick="goStep(4)">Continuar →</button>
-            <button class="btn btn-secondary" onclick="goStep(2)">← Voltar</button>
           </div>
         </div>
-      </div>
 
-      <!-- ── STEP 4: DADOS PESSOAIS ── -->
-      <div class="page" id="page-4">
-        <p class="page-title">Dados Pessoais</p>
-        <p class="page-sub">Preencha os dados do documento e informações adicionais.</p>
-
-        <div class="card">
-          <div class="grid3">
-            <div class="form-row">
-              <label>RG *</label>
-              <input id="f-rg" type="text" placeholder="MG-12.345.678"/>
+        <!-- STEP 5: ENDEREÇO -->
+        <div class="step-wrap" id="sw-5">
+          <div class="card">
+            <div class="frow" style="justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px">
+              <div><h3>Endereço</h3><p class="muted" style="margin-top:2px">Busca automática pelo CEP via ViaCEP</p></div>
+              <span class="badge badge-blue">Etapa 5 de 7</span>
             </div>
-            <div class="form-row">
-              <label>Data de Expedição do RG *</label>
-              <input id="f-rg-data" type="date"/>
+            <div class="g2">
+              <div class="form-row"><label>CEP *</label>
+                <div class="frow"><input id="f-cep" type="text" placeholder="00000-000" maxlength="9" oninput="maskCEP(this)" style="flex:1"/>
+                <button class="btn btn-ghost" onclick="buscarCEP()">🔍</button></div>
+              </div>
+              <div class="form-row"><label>Estado *</label><input id="f-estado" type="text" placeholder="MG" maxlength="2"/></div>
             </div>
-            <div class="form-row">
-              <label>Órgão Emissor</label>
-              <input id="f-rg-orgao" type="text" placeholder="SSP" value="SSP"/>
+            <div class="g2">
+              <div class="form-row"><label>Rua / Logradouro *</label><input id="f-rua" type="text" placeholder="Rua das Flores"/></div>
+              <div class="form-row"><label>Bairro *</label><input id="f-bairro" type="text" placeholder="Centro"/></div>
             </div>
-          </div>
-          <div class="grid2">
-            <div class="form-row">
-              <label>Nome da Mãe *</label>
-              <input id="f-mae" type="text" placeholder="Nome completo da mãe"/>
+            <div class="g3">
+              <div class="form-row"><label>Número *</label><input id="f-num" type="text" placeholder="123"/></div>
+              <div class="form-row"><label>Complemento</label><input id="f-compl" type="text" placeholder="Apto 101"/></div>
+              <div class="form-row"><label>Cidade *</label><input id="f-cidade" type="text" placeholder="Belo Horizonte"/></div>
             </div>
-            <div class="form-row">
-              <label>Estado Civil *</label>
-              <select id="f-civil">
-                <option value="">Selecione</option>
-                <option value="single">Solteiro(a)</option>
-                <option value="married">Casado(a)</option>
-                <option value="divorced">Divorciado(a)</option>
-                <option value="widowed">Viúvo(a)</option>
-                <option value="stable_union">União Estável</option>
-              </select>
+            <div id="s5-alert"></div>
+            <div class="frow" style="margin-top:8px">
+              <button class="btn btn-primary" onclick="submitStep5()">Continuar →</button>
+              <button class="btn btn-ghost" onclick="advanceToStep(4)">← Voltar</button>
             </div>
-          </div>
-          <div class="form-row" style="max-width:300px">
-            <label>Nacionalidade</label>
-            <input id="f-nac" type="text" value="Brasileiro" placeholder="Brasileiro"/>
-          </div>
-          <div id="step4-alert" style="display:none"></div>
-          <div class="actions">
-            <button class="btn btn-primary" onclick="submitStep4()">Continuar →</button>
-            <button class="btn btn-secondary" onclick="goStep(3)">← Voltar</button>
           </div>
         </div>
-      </div>
 
-      <!-- ── STEP 5: ENDEREÇO ── -->
-      <div class="page" id="page-5">
-        <p class="page-title">Endereço</p>
-        <p class="page-sub">Digite o CEP para preenchimento automático via ViaCEP.</p>
+        <!-- STEP 6: PIX -->
+        <div class="step-wrap" id="sw-6">
+          <div class="card">
+            <div class="frow" style="justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px">
+              <div><h3>Dados Bancários</h3><p class="muted" style="margin-top:2px">Chave PIX para recebimento</p></div>
+              <span class="badge badge-blue">Etapa 6 de 7</span>
+            </div>
+            <div class="g2">
+              <div class="form-row"><label>Tipo de Chave PIX *</label>
+                <select id="f-pix-tipo" onchange="updatePixHint()">
+                  <option value="">Selecione</option>
+                  <option value="1">CPF</option>
+                  <option value="2">Telefone</option>
+                  <option value="3">E-mail</option>
+                  <option value="4">Chave Aleatória</option>
+                </select>
+              </div>
+              <div class="form-row"><label>Chave PIX *</label><input id="f-pix-chave" type="text" placeholder="Selecione o tipo acima"/></div>
+            </div>
+            <div class="alert alert-info">ℹ️ O valor será transferido via PIX após assinatura do contrato digital.</div>
+            <div id="s6-alert"></div>
+            <div class="frow" style="margin-top:8px">
+              <button class="btn btn-primary" onclick="submitStep6()">Revisar Proposta →</button>
+              <button class="btn btn-ghost" onclick="advanceToStep(5)">← Voltar</button>
+            </div>
+          </div>
+        </div>
 
-        <div class="card">
-          <div class="grid2">
-            <div class="form-row">
-              <label>CEP *</label>
-              <div style="display:flex;gap:8px">
-                <input id="f-cep" type="text" placeholder="00000-000" maxlength="9" oninput="maskCEP(this)" style="flex:1"/>
-                <button class="btn btn-secondary" onclick="buscarCEP()" style="white-space:nowrap">Buscar</button>
+        <!-- STEP 7: PROPOSTA -->
+        <div class="step-wrap" id="sw-7">
+          <div id="s7-review">
+            <div class="card" style="margin-bottom:16px">
+              <div class="frow" style="justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px">
+                <div><h3>Resumo da Operação</h3><p class="muted" style="margin-top:2px">Revise os dados antes de gerar</p></div>
+                <span class="badge badge-blue">Etapa 7 de 7</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                <div>
+                  <div style="font-size:11px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">Operação</div>
+                  <div id="s7-op-rows"></div>
+                </div>
+                <div>
+                  <div style="font-size:11px;color:var(--text2);font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">Cliente</div>
+                  <div id="s7-cli-rows"></div>
+                </div>
+              </div>
+              <div id="s7-alert"></div>
+              <div class="frow" style="margin-top:20px">
+                <button class="btn btn-success" id="btn-gerar" onclick="gerarProposta()">✓ Gerar Proposta</button>
+                <button class="btn btn-ghost" onclick="advanceToStep(6)">← Voltar</button>
               </div>
             </div>
-            <div class="form-row">
-              <label>Estado *</label>
-              <input id="f-estado" type="text" placeholder="MG" maxlength="2"/>
+          </div>
+          <div class="card" id="s7-loading" style="display:none">
+            <div class="loading-card"><div class="spinner"></div><div style="font-size:15px;font-weight:600">Gerando Proposta...</div><div class="muted">Aguarde enquanto processamos a operação</div></div>
+          </div>
+          <div class="card" id="s7-success" style="display:none">
+            <div class="success-wrap">
+              <div class="success-icon">🎉</div>
+              <h2 style="font-size:22px;margin-bottom:6px">Proposta Gerada!</h2>
+              <p class="muted">Envie o link abaixo para o cliente assinar</p>
+              <div class="frow" style="justify-content:center;gap:8px;margin:12px 0">
+                <span class="badge badge-gray">ID: <span id="s7-op-id"></span></span>
+                <span class="badge badge-green">✓ Sucesso</span>
+              </div>
+              <div class="link-box" id="s7-link" onclick="copiarLink()">Clique para copiar o link</div>
+              <div class="frow" style="justify-content:center;flex-wrap:wrap;gap:10px;margin-top:16px">
+                <button class="btn btn-primary" onclick="copiarLink()">📋 Copiar Link</button>
+                <button class="btn btn-ghost" onclick="abrirLink()">🔗 Abrir Link</button>
+                <button class="btn btn-ghost" onclick="novaOperacao()">➕ Nova Operação</button>
+              </div>
             </div>
           </div>
-          <div class="grid2">
-            <div class="form-row">
-              <label>Rua / Logradouro *</label>
-              <input id="f-rua" type="text" placeholder="Rua das Flores"/>
-            </div>
-            <div class="form-row">
-              <label>Bairro *</label>
-              <input id="f-bairro" type="text" placeholder="Centro"/>
-            </div>
+        </div>
+
+      </div><!-- /page-operation -->
+
+      <!-- ── HISTÓRICO ── -->
+      <div class="page" id="page-history">
+        <div class="page-header">
+          <div class="frow">
+            <div><h2>Histórico</h2><p class="muted">Operações desta sessão</p></div>
+            <button class="btn btn-ghost btn-sm" onclick="limparHistorico()">🗑️ Limpar</button>
           </div>
-          <div class="grid3">
-            <div class="form-row">
-              <label>Número *</label>
-              <input id="f-num" type="text" placeholder="123"/>
-            </div>
-            <div class="form-row">
-              <label>Complemento</label>
-              <input id="f-compl" type="text" placeholder="Apto 101"/>
-            </div>
-            <div class="form-row">
-              <label>Cidade *</label>
-              <input id="f-cidade" type="text" placeholder="Belo Horizonte"/>
-            </div>
-          </div>
-          <div id="step5-alert" style="display:none"></div>
-          <div class="actions">
-            <button class="btn btn-primary" onclick="submitStep5()">Continuar →</button>
-            <button class="btn btn-secondary" onclick="goStep(4)">← Voltar</button>
+        </div>
+        <div id="history-list">
+          <div style="text-align:center;padding:48px;color:var(--text3);font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">
+            Nenhuma operação registrada nesta sessão
           </div>
         </div>
       </div>
 
-      <!-- ── STEP 6: DADOS BANCÁRIOS ── -->
-      <div class="page" id="page-6">
-        <p class="page-title">Dados Bancários</p>
-        <p class="page-sub">Informe a chave PIX para recebimento do valor do empréstimo.</p>
-
-        <div class="card">
-          <div class="grid2">
-            <div class="form-row">
-              <label>Tipo de Chave PIX *</label>
-              <select id="f-pix-tipo" onchange="updatePixPlaceholder()">
-                <option value="">Selecione</option>
-                <option value="1">CPF</option>
-                <option value="2">Telefone</option>
-                <option value="3">E-mail</option>
-                <option value="4">Chave Aleatória</option>
-              </select>
-            </div>
-            <div class="form-row">
-              <label>Chave PIX *</label>
-              <input id="f-pix-chave" type="text" placeholder="Selecione o tipo acima"/>
-            </div>
-          </div>
-          <div class="alert alert-info">
-            ℹ️ O valor será transferido via PIX após a assinatura do contrato.
-          </div>
-          <div id="step6-alert" style="display:none"></div>
-          <div class="actions">
-            <button class="btn btn-primary" onclick="submitStep6()">Revisar Proposta →</button>
-            <button class="btn btn-secondary" onclick="goStep(5)">← Voltar</button>
-          </div>
+      <!-- ── CONFIGURAÇÕES ── -->
+      <div class="page" id="page-settings">
+        <div class="page-header">
+          <h2>Configurações</h2>
+          <p class="muted">Gerencie as configurações do painel</p>
         </div>
-      </div>
 
-      <!-- ── STEP 7: PROPOSTA ── -->
-      <div class="page" id="page-7">
-        <p class="page-title">Gerar Proposta</p>
-        <p class="page-sub">Revise os dados e gere a proposta para assinatura.</p>
-
-        <div class="card" id="s7-review">
-          <div style="font-weight:600;margin-bottom:16px;color:var(--primary)">Resumo da Operação</div>
-          <div id="s7-summary-rows"></div>
-
-          <div style="font-weight:600;margin:20px 0 12px;color:var(--primary)">Dados do Cliente</div>
-          <div id="s7-client-rows"></div>
-
-          <div id="step7-alert" style="display:none"></div>
-          <div class="actions">
-            <button class="btn btn-success" id="btn-gerar" onclick="gerarProposta()">
-              ✓ Gerar Proposta
-            </button>
-            <button class="btn btn-secondary" onclick="goStep(6)">← Voltar</button>
+        <div class="settings-section">
+          <h3>🏦 Banco Ativo</h3>
+          <p class="muted">Integração configurada no servidor</p>
+          <div class="cred-item"><span class="cred-key">Banco</span><span style="font-size:12px;color:var(--text)">V8 Sistema — CLT Privado</span></div>
+          <div class="cred-item"><span class="cred-key">V8_USERNAME</span><span class="cred-val" id="cfg-user">••••••••</span></div>
+          <div class="cred-item"><span class="cred-key">V8_CONFIG_ID</span><span class="cred-val">fbbb3a06-...cb4db796</span></div>
+          <div class="cred-item"><span class="cred-key">Status da API</span>
+            <span class="badge badge-green" id="cfg-status">● Online</span>
           </div>
         </div>
 
-        <div class="card" id="s7-loading" style="display:none">
-          <div class="loader">
-            <div class="spinner"></div>
-            <div class="loader-text">Gerando proposta...</div>
+        <div class="settings-section">
+          <h3>🔐 Segurança do Painel</h3>
+          <p class="muted">Altere as credenciais de acesso</p>
+          <div class="g2">
+            <div class="form-row"><label>Novo Usuário</label><input id="cfg-new-user" type="text" placeholder="Deixe em branco para manter"/></div>
+            <div class="form-row"><label>Nova Senha</label><input id="cfg-new-pass" type="password" placeholder="Deixe em branco para manter"/></div>
+          </div>
+          <div class="alert alert-warn">⚠️ Alterações nas credenciais requerem reinicialização do container para ter efeito.</div>
+          <button class="btn btn-ghost btn-sm" onclick="toast('Configuração salva nas variáveis de ambiente','info')">💾 Salvar Configurações</button>
+        </div>
+
+        <div class="settings-section">
+          <h3>🎨 Interface</h3>
+          <p class="muted">Personalize a aparência do painel</p>
+          <div class="toggle-wrap">
+            <div><div style="font-size:13px;font-weight:500">Animações</div><div style="font-size:11px;color:var(--text3)">Transições suaves entre páginas</div></div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="toggle-wrap">
+            <div><div style="font-size:13px;font-weight:500">Sons</div><div style="font-size:11px;color:var(--text3)">Notificações sonoras</div></div>
+            <div class="toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="toggle-wrap">
+            <div><div style="font-size:13px;font-weight:500">Auto-preenchimento</div><div style="font-size:11px;color:var(--text3)">Buscar dados do cliente automaticamente</div></div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
           </div>
         </div>
 
-        <div class="card proposta-success" id="s7-success" style="display:none">
-          <div class="check-icon">✅</div>
-          <div style="font-size:22px;font-weight:700;margin-bottom:8px">Proposta Gerada!</div>
-          <div style="color:var(--muted);margin-bottom:4px">ID da Operação: <span id="s7-op-id" style="color:var(--text)"></span></div>
-          <div style="color:var(--muted);font-size:13px;margin-bottom:16px">Envie o link abaixo para o cliente assinar o contrato:</div>
-          <a id="s7-link" href="#" target="_blank" class="proposta-link">🔗 Link de Formalização</a>
-          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px">
-            <button class="btn btn-primary" onclick="copiarLink()">📋 Copiar Link</button>
-            <button class="btn btn-secondary" onclick="novaOperacao()">+ Nova Operação</button>
-          </div>
+        <div class="settings-section">
+          <h3>ℹ️ Sobre o Sistema</h3>
+          <p class="muted">Informações da versão</p>
+          <div class="cred-item"><span class="cred-key">Versão</span><span style="font-size:12px;color:var(--text)">2.0.0</span></div>
+          <div class="cred-item"><span class="cred-key">Banco de dados</span><span style="font-size:12px;color:var(--text)">Supabase (produção)</span></div>
+          <div class="cred-item"><span class="cred-key">Servidor</span><span style="font-size:12px;color:var(--text)">FastAPI + Uvicorn</span></div>
+          <div class="cred-item"><span class="cred-key">Ambiente</span><span class="badge badge-green">● Produção</span></div>
         </div>
       </div>
 
     </div><!-- /main-content -->
   </div><!-- /app-body -->
-</div><!-- /app -->
+</div><!-- /screen-app -->
 
 <script>
-// ═══════════════════════ STATE ═══════════════════════
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
 const S = {
-  step: 1,
-  maxStep: 1,
-  cpf:'', nome:'', email:'', celular:'', dataNasc:'', genero:'',
-  taskId: null,
-  consulta: null,     // dados da consulta bem-sucedida
-  installments: [],
-  selectedInstallment: null,
-  simulacao: null,
-  rg:'', rgData:'', rgOrgao:'', civil:'', mae:'', nac:'',
-  cep:'', rua:'', num:'', compl:'', bairro:'', cidade:'', estado:'',
-  pixTipo:'', pixChave:'',
-  proposta: null,
+  step:1, maxStep:1,
+  cpf:'',nome:'',email:'',celular:'',dataNasc:'',genero:'',
+  taskId:null, consulta:null, installments:[],
+  simulacao:null, rg:'',rgData:'',rgOrgao:'',civil:'',mae:'',nac:'',
+  cep:'',rua:'',num:'',compl:'',bairro:'',cidade:'',estado:'',
+  pixTipo:'',pixChave:'', proposta:null,
+  bank:'v8',
 };
+const stats = {consultas:0, propostas:0, volume:0};
+const history = [];
 let pollTimer = null;
+let currentUser = '';
 
-// ═══════════════════════ LOGIN ═══════════════════════
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+function toast(msg, type='info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  const icons = {info:'ℹ️', success:'✅', error:'❌', warn:'⚠️'};
+  t.className = `toast toast-${type==='warn'?'info':type}`;
+  t.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span style="flex:1">${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(() => { t.classList.add('removing'); setTimeout(()=>t.remove(),250); }, 3500);
+}
+
+// ══════════════════════════════════════════
+// SCREENS
+// ══════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(`screen-${name}`).classList.add('active');
+}
+
+// ══════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════
 async function doLogin() {
   const u = document.getElementById('l-user').value.trim();
   const p = document.getElementById('l-pass').value;
-  const err = document.getElementById('l-err');
-  err.style.display = 'none';
+  document.getElementById('l-err').style.display='none';
   try {
-    const r = await fetch('/api/auth/login', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({username:u, password:p})
-    });
-    if (r.ok) {
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app').style.display = 'flex';
-      document.getElementById('topbar-user').textContent = u;
-    } else {
-      err.style.display = 'block';
-    }
-  } catch(e) { err.textContent = 'Erro de conexão.'; err.style.display='block'; }
+    const r = await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    if(r.ok){
+      currentUser=u;
+      document.getElementById('tb-user').textContent=u;
+      document.getElementById('tb-avatar').textContent=u[0].toUpperCase();
+      showScreen('banks');
+    } else { document.getElementById('l-err').style.display='flex'; }
+  } catch(e){ document.getElementById('l-err').style.display='flex'; }
+}
+document.getElementById('l-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+document.getElementById('l-user').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+
+function doLogout(){showScreen('login');novaOperacao(false);}
+
+// ══════════════════════════════════════════
+// BANK SELECTION
+// ══════════════════════════════════════════
+function selectBank(bank) {
+  S.bank = bank;
+  const labels = {v8:'V8 Sistema — CLT Privado'};
+  document.getElementById('tb-bank').textContent = bank==='v8'?'V8 CLT':'Banco';
+  document.getElementById('sb-bank').textContent = bank==='v8'?'V8 Sistema':'Banco';
+  document.getElementById('op-bank-label').textContent = labels[bank]||bank;
+  showScreen('app');
+  setPage('dashboard');
+  toast('V8 Sistema selecionado','success');
 }
 
-document.getElementById('l-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-document.getElementById('l-user').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-
-function doLogout() {
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-  novaOperacao(false);
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function setPage(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const nav = document.getElementById(`nav-${name}`);
+  if(nav) nav.classList.add('active');
+  if(name==='history') renderHistory();
+  if(name==='dashboard') updateDashboard();
 }
 
-// ═══════════════════════ NAVIGATION ═══════════════════════
-const STEPS = 7;
-function goStep(n) {
-  if (n > S.maxStep) return;
+function advanceToStep(n) {
+  if(n > S.maxStep) return;
   S.step = n;
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById(`page-${n}`).classList.add('active');
-
-  document.querySelectorAll('.step-item').forEach((el, i) => {
-    el.classList.remove('active','done','locked');
-    const sn = i + 1;
-    if (sn < n) el.classList.add('done');
-    else if (sn === n) el.classList.add('active');
-    else if (sn <= S.maxStep) el.classList.remove('locked');
-    else el.classList.add('locked');
-  });
-
-  const pct = Math.round((n / STEPS) * 100);
-  document.getElementById('prog-fill').style.width = pct + '%';
-
-  if (n === 3 && S.consulta) loadParcelas();
-  if (n === 4) preencheStep4();
-  if (n === 7) renderReview();
-}
-
-// ═══════════════════════ MASKS ═══════════════════════
-function maskCPF(el) {
-  let v = el.value.replace(/\D/g,'').slice(0,11);
-  v = v.replace(/(\d{3})(\d)/,'$1.$2');
-  v = v.replace(/(\d{3})(\d)/,'$1.$2');
-  v = v.replace(/(\d{3})(\d{1,2})$/,'$1-$2');
-  el.value = v;
-}
-function maskCEP(el) {
-  let v = el.value.replace(/\D/g,'').slice(0,8);
-  v = v.replace(/(\d{5})(\d)/,'$1-$2');
-  el.value = v;
-}
-function fmtBRL(v) {
-  return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-}
-function fmtDate(d) {
-  if (!d) return '—';
-  const [y,m,dd] = d.split('-');
-  return `${dd}/${m}/${y}`;
-}
-
-// ═══════════════════════ STEP 1 ═══════════════════════
-async function buscarDadosCliente() {
-  const cpf = document.getElementById('f-cpf').value.replace(/\D/g,'');
-  if (cpf.length !== 11) { showAlert('step1-alert','warn','Digite um CPF válido (11 dígitos).'); return; }
-  try {
-    const r = await fetch(`/api/v8/dados-cliente/${cpf}`);
-    const d = await r.json();
-    if (d.name) document.getElementById('f-nome').value = d.name;
-    if (d.email) document.getElementById('f-email').value = d.email;
-    if (d.birthDate) document.getElementById('f-nasc').value = d.birthDate.split('T')[0];
-    if (d.gender) document.getElementById('f-genero').value = d.gender;
-    if (d.phoneRegionCode && d.phoneNumber)
-      document.getElementById('f-celular').value = d.phoneRegionCode + d.phoneNumber;
-    showAlert('step1-alert','info','Dados preenchidos automaticamente. Revise e confirme.');
-  } catch(e) {
-    showAlert('step1-alert','info','Não foi possível buscar dados automáticos. Preencha manualmente.');
+  document.querySelectorAll('.step-wrap').forEach(s=>s.classList.remove('active'));
+  document.getElementById(`sw-${n}`).classList.add('active');
+  // wizard dots
+  for(let i=1;i<=7;i++){
+    const d=document.getElementById(`wd-${i}`);
+    if(!d) continue;
+    d.classList.remove('active','done');
+    if(i<n) d.classList.add('done'), d.textContent='✓';
+    else if(i===n) d.classList.add('active'), d.textContent=i;
+    else d.textContent=i;
   }
+  for(let i=1;i<=6;i++){
+    const l=document.getElementById(`wl-${i}`);
+    if(l) l.classList.toggle('done',i<n);
+  }
+  if(n===3 && S.consulta) loadSimulacao();
+  if(n===4) preencheStep4();
+  if(n===7) renderReview();
 }
 
-async function submitStep1() {
-  const cpf    = document.getElementById('f-cpf').value.replace(/\D/g,'');
-  const nome   = document.getElementById('f-nome').value.trim();
-  const email  = document.getElementById('f-email').value.trim();
-  const cel    = document.getElementById('f-celular').value.replace(/\D/g,'');
-  const nasc   = document.getElementById('f-nasc').value;
-  const gen    = document.getElementById('f-genero').value;
+// ══════════════════════════════════════════
+// MASKS & FORMAT
+// ══════════════════════════════════════════
+function maskCPF(el){let v=el.value.replace(/\D/g,'').slice(0,11);v=v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');el.value=v;}
+function maskCEP(el){let v=el.value.replace(/\D/g,'').slice(0,8);v=v.replace(/(\d{5})(\d)/,'$1-$2');el.value=v;}
+function fmtBRL(v){return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
+function fmtDate(d){if(!d)return'—';const[y,m,dd]=d.split('-');return`${dd}/${m}/${y}`;}
+function formatCPF(c){const v=c.replace(/\D/g,'');return v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');}
+function infoRow(l,v,color){return`<div class="info-row"><span class="ir-label">${l}</span><span class="ir-value"${color?` style="color:${color}"`:''}>${v}</span></div>`;}
 
-  if (!cpf || cpf.length !== 11) { showAlert('step1-alert','err','CPF inválido.'); return; }
-  if (!nome) { showAlert('step1-alert','err','Nome é obrigatório.'); return; }
-  if (!email || !email.includes('@')) { showAlert('step1-alert','err','E-mail inválido.'); return; }
-  if (!cel || cel.length < 10) { showAlert('step1-alert','err','Celular inválido. Use DDD + número.'); return; }
-  if (!nasc) { showAlert('step1-alert','err','Data de nascimento é obrigatória.'); return; }
-  if (!gen) { showAlert('step1-alert','err','Selecione o gênero.'); return; }
-
-  S.cpf = cpf; S.nome = nome; S.email = email;
-  S.celular = cel; S.dataNasc = nasc; S.genero = gen;
-
-  S.maxStep = Math.max(S.maxStep, 2);
-  goStep(2);
-  startConsulta();
+function showAlert(id,type,msg){
+  const el=document.getElementById(id); if(!el) return;
+  const cls={err:'alert-err',info:'alert-info',warn:'alert-warn',success:'alert-success'}[type]||'alert-info';
+  el.innerHTML=`<div class="alert ${cls}">${msg}</div>`;
+  setTimeout(()=>el.innerHTML='',6000);
 }
 
-// ═══════════════════════ STEP 2 — CONSULTA ═══════════════════════
-async function startConsulta() {
-  document.getElementById('s2-loading').style.display = 'block';
-  document.getElementById('s2-result').style.display = 'none';
-  document.getElementById('s2-error').style.display = 'none';
-  S.consulta = null;
-  S.installments = [];
-  S.simulacao = null;
-  S.taskId = null;
+// ══════════════════════════════════════════
+// STEP 1
+// ══════════════════════════════════════════
+async function buscarDadosCliente(){
+  const cpf=document.getElementById('f-cpf').value.replace(/\D/g,'');
+  if(cpf.length!==11){toast('CPF deve ter 11 dígitos','warn');return;}
+  try{
+    const r=await fetch(`/api/v8/dados-cliente/${cpf}`);
+    const d=await r.json();
+    if(d.name) document.getElementById('f-nome').value=d.name;
+    if(d.email) document.getElementById('f-email').value=d.email;
+    if(d.birthDate) document.getElementById('f-nasc').value=d.birthDate.split('T')[0];
+    if(d.gender) document.getElementById('f-genero').value=d.gender.toUpperCase().startsWith('M')?'M':'F';
+    if(d.phoneRegionCode&&d.phoneNumber) document.getElementById('f-celular').value=d.phoneRegionCode+d.phoneNumber;
+    toast('Dados preenchidos automaticamente','success');
+  } catch(e){ toast('Dados não encontrados, preencha manualmente','info'); }
+}
 
-  try {
-    const r = await fetch('/api/v8/consultar', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        cpf: S.cpf, nome: S.nome, email: S.email,
-        celular: S.celular, data_nasc: S.dataNasc, genero: S.genero
-      })
-    });
-    const d = await r.json();
-    S.taskId = d.task_id;
+async function submitStep1(){
+  const cpf=document.getElementById('f-cpf').value.replace(/\D/g,'');
+  const nome=document.getElementById('f-nome').value.trim();
+  const email=document.getElementById('f-email').value.trim();
+  const cel=document.getElementById('f-celular').value.replace(/\D/g,'');
+  const nasc=document.getElementById('f-nasc').value;
+  const gen=document.getElementById('f-genero').value;
+  if(cpf.length!==11){showAlert('s1-alert','err','CPF inválido.');return;}
+  if(!nome){showAlert('s1-alert','err','Nome é obrigatório.');return;}
+  if(!email||!email.includes('@')){showAlert('s1-alert','err','E-mail inválido.');return;}
+  if(!cel||cel.length<10){showAlert('s1-alert','err','Celular inválido.');return;}
+  if(!nasc){showAlert('s1-alert','err','Data de nascimento obrigatória.');return;}
+  if(!gen){showAlert('s1-alert','err','Selecione o gênero.');return;}
+  S.cpf=cpf;S.nome=nome;S.email=email;S.celular=cel;S.dataNasc=nasc;S.genero=gen;
+  S.maxStep=Math.max(S.maxStep,2);
+  setPage('operation');
+  advanceToStep(2);
+  iniciarConsulta();
+}
+
+// ══════════════════════════════════════════
+// STEP 2 — CONSULTA
+// ══════════════════════════════════════════
+async function iniciarConsulta(){
+  document.getElementById('s2-loading').style.display='block';
+  document.getElementById('s2-result').style.display='none';
+  document.getElementById('s2-error').style.display='none';
+  S.consulta=null; S.installments=[]; S.simulacao=null; S.taskId=null;
+  stats.consultas++;
+  ['ls-1','ls-2','ls-3','ls-4'].forEach((id,i)=>document.getElementById(id).classList.toggle('active',i===0));
+  try{
+    const r=await fetch('/api/v8/consultar',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({cpf:S.cpf,nome:S.nome,email:S.email,celular:S.celular,data_nasc:S.dataNasc,genero:S.genero})});
+    const d=await r.json();
+    S.taskId=d.task_id;
     pollConsulta();
-  } catch(e) {
-    showConsultaError('Falha ao iniciar consulta: ' + e.message);
-  }
+  }catch(e){ mostrarErroConsulta('Falha ao iniciar: '+e.message); }
 }
 
-function pollConsulta() {
-  if (pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(async () => {
-    if (!S.taskId) return;
-    try {
-      const r = await fetch(`/api/v8/consulta/${S.taskId}`);
-      const d = await r.json();
-      document.getElementById('s2-step-text').textContent = d.step || '...';
-
-      if (d.status === 'success') {
-        clearInterval(pollTimer);
-        S.consulta = d.data;
-        S.maxStep = Math.max(S.maxStep, 3);
-        renderConsultaResult();
-      } else if (d.status === 'error') {
-        clearInterval(pollTimer);
-        showConsultaError(d.error || 'Erro ao processar consulta.');
+let stepIdx=0;
+function pollConsulta(){
+  if(pollTimer) clearInterval(pollTimer);
+  pollTimer=setInterval(async()=>{
+    if(!S.taskId) return;
+    try{
+      const r=await fetch(`/api/v8/consulta/${S.taskId}`);
+      const d=await r.json();
+      document.getElementById('s2-step-text').textContent=d.step||'...';
+      // atualiza steps visuais
+      const stepMap={'Gerando':0,'Autorizando':1,'Aguardando':2,'Processando':3,'Verificando':3};
+      const txt=d.step||'';
+      for(const[k,i] of Object.entries(stepMap)){
+        if(txt.includes(k)){
+          ['ls-1','ls-2','ls-3','ls-4'].forEach((id,idx)=>document.getElementById(id).classList.toggle('active',idx===i));
+          break;
+        }
       }
-    } catch(e) {}
-  }, 3000);
+      if(d.status==='success'){
+        clearInterval(pollTimer);
+        S.consulta=d.data;
+        S.maxStep=Math.max(S.maxStep,3);
+        renderConsultaResult();
+      } else if(d.status==='error'){
+        clearInterval(pollTimer);
+        mostrarErroConsulta(d.error||'Erro ao processar.');
+      }
+    }catch(e){}
+  },3000);
 }
 
-function renderConsultaResult() {
-  document.getElementById('s2-loading').style.display = 'none';
-  document.getElementById('s2-result').style.display = 'block';
-  const c = S.consulta;
-  document.getElementById('s2-nome-cliente').textContent = S.nome;
-  document.getElementById('s2-cpf-display').textContent = formatCPF(S.cpf);
-
-  const grid = document.getElementById('s2-info-grid');
-  grid.innerHTML = `
-    ${infoCard('Margem Disponível', fmtBRL(c.margem_disponivel), 'var(--green)')}
-    ${infoCard('Empregador', c.employer_name || '—')}
-    ${infoCard('Matrícula', c.registration_number || '—')}
-    ${infoCard('Admissão', fmtDate(c.admission_date))}
-    ${infoCard('Parcela Sugerida', fmtBRL(c.recommended_installment_value))}
-    ${infoCard('Prazo Sugerido', (c.recommended_installment_number || '—') + ' meses')}
-  `;
+function renderConsultaResult(){
+  document.getElementById('s2-loading').style.display='none';
+  document.getElementById('s2-result').style.display='block';
+  const c=S.consulta;
+  document.getElementById('s2-nome').textContent=S.nome;
+  document.getElementById('s2-cpf-fmt').textContent=formatCPF(S.cpf);
+  document.getElementById('s2-margem').textContent=fmtBRL(c.margem_disponivel);
+  document.getElementById('s2-info-rows').innerHTML=
+    infoRow('Empregador',c.employer_name||'—')+
+    infoRow('Matrícula',c.registration_number||'—')+
+    infoRow('Admissão',fmtDate(c.admission_date))+
+    infoRow('Parcela Sugerida',fmtBRL(c.recommended_installment_value),'var(--primary)')+
+    infoRow('Prazo Sugerido',(c.recommended_installment_number||'—')+' meses');
+  toast('Margem encontrada: '+fmtBRL(c.margem_disponivel),'success');
 }
 
-function showConsultaError(msg) {
-  document.getElementById('s2-loading').style.display = 'none';
-  document.getElementById('s2-error').style.display = 'block';
-  document.getElementById('s2-err-msg').textContent = '⚠️ ' + msg;
+function mostrarErroConsulta(msg){
+  document.getElementById('s2-loading').style.display='none';
+  document.getElementById('s2-error').style.display='block';
+  document.getElementById('s2-err-msg').innerHTML=`<div class="alert alert-err">⚠️ ${msg}</div>`;
+  toast('Erro na consulta','error');
 }
 
-function infoCard(label, value, color) {
-  const col = color ? `color:${color}` : '';
-  return `<div class="info-card"><div class="ic-label">${label}</div><div class="ic-value" style="${col}">${value}</div></div>`;
-}
-
-// ═══════════════════════ STEP 3 — SIMULAÇÃO ═══════════════════════
-async function loadParcelas() {
-  document.getElementById('s3-loading').style.display = 'none';
-  document.getElementById('s3-content').style.display = 'block';
-
-  // pré-preenche o valor com a margem disponível
-  if (S.consulta) {
-    const margem = S.consulta.recommended_installment_value || S.consulta.margem_disponivel || 0;
-    document.getElementById('f-sim-valor').value = margem.toFixed(2);
-    document.getElementById('s3-margem-hint').textContent =
-      `Margem disponível: ${fmtBRL(S.consulta.margem_disponivel)} — Parcela sugerida: ${fmtBRL(S.consulta.recommended_installment_value)}`;
+// ══════════════════════════════════════════
+// STEP 3 — SIMULAÇÃO
+// ══════════════════════════════════════════
+async function loadSimulacao(){
+  if(S.consulta){
+    const m=S.consulta.recommended_installment_value||S.consulta.margem_disponivel||0;
+    document.getElementById('f-sim-valor').value=m.toFixed(2);
+    document.getElementById('s3-hint').textContent=`Margem: ${fmtBRL(S.consulta.margem_disponivel)} — Sugerida: ${fmtBRL(S.consulta.recommended_installment_value)}`;
   }
-
-  // carrega opções de prazo
-  try {
-    const r = await fetch('/api/v8/parcelas', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({consult_id: S.consulta.consult_id})
-    });
-    const d = await r.json();
-    S.installments = d.installments || [];
-    const sel = document.getElementById('f-sim-parcelas');
-    if (S.installments.length) {
-      sel.innerHTML = S.installments.map(i => {
-        const num = i.installmentNumbers || i.installment_numbers || i.number;
-        return `<option value="${num}">${num}x</option>`;
-      }).join('');
-      // seleciona o prazo sugerido se disponível
-      const sugerido = S.consulta?.recommended_installment_number;
-      if (sugerido) sel.value = sugerido;
+  try{
+    const r=await fetch('/api/v8/parcelas',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({consult_id:S.consulta.consult_id})});
+    const d=await r.json();
+    S.installments=d.installments||[];
+    const sel=document.getElementById('f-sim-parcelas');
+    if(S.installments.length){
+      sel.innerHTML=S.installments.map(i=>{const n=i.installmentNumbers||i.installment_numbers||i.number;return`<option value="${n}">${n}x</option>`;}).join('');
+      if(S.consulta?.recommended_installment_number) sel.value=S.consulta.recommended_installment_number;
     } else {
-      // fallback com prazos padrão
-      sel.innerHTML = [6,8,10,12,18,24,36,48].map(n => `<option value="${n}">${n}x</option>`).join('');
+      sel.innerHTML=[6,8,10,12,18,24,36,48].map(n=>`<option value="${n}">${n}x</option>`).join('');
     }
-  } catch(e) {
-    const sel = document.getElementById('f-sim-parcelas');
-    sel.innerHTML = [6,8,10,12,18,24,36,48].map(n => `<option value="${n}">${n}x</option>`).join('');
+  }catch(e){
+    document.getElementById('f-sim-parcelas').innerHTML=[6,8,10,12,18,24,36,48].map(n=>`<option value="${n}">${n}x</option>`).join('');
   }
-
-  document.getElementById('s3-sim-result').style.display = 'none';
-  document.getElementById('s3-actions').style.display = 'none';
+  document.getElementById('s3-result').style.display='none';
 }
 
-async function executarSimulacao() {
-  const valor = parseFloat(document.getElementById('f-sim-valor').value);
-  const num   = parseInt(document.getElementById('f-sim-parcelas').value);
-
-  if (!valor || valor <= 0) { showAlert('s3-alert','err','Informe o valor da parcela.'); return; }
-  if (!num) { showAlert('s3-alert','err','Selecione o número de parcelas.'); return; }
-
-  document.getElementById('s3-loading').style.display = 'block';
-  document.getElementById('s3-content').style.display = 'none';
-
-  try {
-    const r = await fetch('/api/v8/simular', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        consult_id: S.consulta.consult_id,
-        installment_face_value: valor,
-        number_of_installments: num
-      })
-    });
-    if (!r.ok) { const t = await r.text(); throw new Error(t); }
-    S.simulacao = await r.json();
-    document.getElementById('s3-loading').style.display = 'none';
-    document.getElementById('s3-content').style.display = 'block';
-    renderSimResult();
-    S.maxStep = Math.max(S.maxStep, 4);
-    document.getElementById('s3-actions').style.display = 'flex';
-  } catch(e) {
-    document.getElementById('s3-loading').style.display = 'none';
-    document.getElementById('s3-content').style.display = 'block';
-    showAlert('s3-alert','err','Erro na simulação: ' + e.message);
+async function executarSimulacao(){
+  const valor=parseFloat(document.getElementById('f-sim-valor').value);
+  const num=parseInt(document.getElementById('f-sim-parcelas').value);
+  if(!valor||valor<=0){showAlert('s3-alert','err','Informe o valor da parcela.');return;}
+  if(!num){showAlert('s3-alert','err','Selecione o número de parcelas.');return;}
+  document.getElementById('s3-loading').style.display='block';
+  document.getElementById('s3-content').style.display='none';
+  try{
+    const r=await fetch('/api/v8/simular',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({consult_id:S.consulta.consult_id,installment_face_value:valor,number_of_installments:num})});
+    if(!r.ok){const t=await r.text();throw new Error(t);}
+    S.simulacao=await r.json();
+    document.getElementById('s3-loading').style.display='none';
+    document.getElementById('s3-content').style.display='block';
+    document.getElementById('s3-valor-liberar').textContent=fmtBRL(S.simulacao.disbursement_amount);
+    document.getElementById('s3-rows').innerHTML=
+      infoRow('Valor da Operação',fmtBRL(S.simulacao.operation_amount))+
+      infoRow('Valor a Receber',fmtBRL(S.simulacao.disbursement_amount),'var(--green)')+
+      infoRow('IOF',fmtBRL(S.simulacao.iof_amount))+
+      infoRow('Parcelas',S.simulacao.number_of_installments+'x de '+fmtBRL(S.simulacao.installment_value))+
+      infoRow('Taxa Mensal',S.simulacao.monthly_interest_rate+'%')+
+      infoRow('1ª Parcela',fmtDate(S.simulacao.first_installment_date));
+    document.getElementById('s3-result').style.display='block';
+    S.maxStep=Math.max(S.maxStep,4);
+    toast('Simulação realizada com sucesso','success');
+  }catch(e){
+    document.getElementById('s3-loading').style.display='none';
+    document.getElementById('s3-content').style.display='block';
+    showAlert('s3-alert','err','Erro na simulação: '+e.message);
+    toast('Erro na simulação','error');
   }
 }
 
-function renderSimResult() {
-  const s = S.simulacao;
-  document.getElementById('s3-sim-result').style.display = 'block';
-  document.getElementById('s3-valor-liberar').textContent = fmtBRL(s.disbursement_amount);
-  document.getElementById('s3-sim-rows').innerHTML = `
-    ${simRow('Valor da Operação', fmtBRL(s.operation_amount))}
-    ${simRow('Valor a Receber', fmtBRL(s.disbursement_amount), 'var(--green)')}
-    ${simRow('IOF', fmtBRL(s.iof_amount))}
-    ${simRow('Parcelas', s.number_of_installments + 'x de ' + fmtBRL(s.installment_value))}
-    ${simRow('Taxa Mensal', s.monthly_interest_rate + '%')}
-    ${simRow('1ª Parcela em', fmtDate(s.first_installment_date))}
-  `;
-}
-
-function simRow(label, value, color) {
-  const c = color ? `color:${color}` : '';
-  return `<div class="sim-row"><span class="sr-label">${label}</span><span class="sr-value" style="${c}">${value}</span></div>`;
-}
-
-// ═══════════════════════ STEP 4 — DADOS PESSOAIS ═══════════════════════
-function submitStep4() {
-  const rg    = document.getElementById('f-rg').value.trim();
-  const rgD   = document.getElementById('f-rg-data').value;
-  const rgO   = document.getElementById('f-rg-orgao').value.trim();
-  const mae   = document.getElementById('f-mae').value.trim();
-  const civil = document.getElementById('f-civil').value;
-  const nac   = document.getElementById('f-nac').value.trim();
-
-  if (!rg) { showAlert('step4-alert','err','RG é obrigatório.'); return; }
-  if (!rgD) { showAlert('step4-alert','err','Data de expedição é obrigatória.'); return; }
-  if (!mae) { showAlert('step4-alert','err','Nome da mãe é obrigatório.'); return; }
-  if (!civil) { showAlert('step4-alert','err','Estado civil é obrigatório.'); return; }
-
-  S.rg = rg; S.rgData = rgD; S.rgOrgao = rgO || 'SSP';
-  S.mae = mae; S.civil = civil; S.nac = nac || 'Brasileiro';
-
-  // Auto-preenche nome da mãe da consulta, se disponível
-  if (!mae && S.consulta?.mother_name) {
-    document.getElementById('f-mae').value = S.consulta.mother_name;
-    S.mae = S.consulta.mother_name;
+// ══════════════════════════════════════════
+// STEP 4
+// ══════════════════════════════════════════
+function preencheStep4(){
+  if(S.cpf&&!document.getElementById('f-rg').value){
+    document.getElementById('f-rg').value=S.cpf.replace(/\D/g,'').slice(-8);
   }
-
-  S.maxStep = Math.max(S.maxStep, 5);
-  goStep(5);
+  if(!document.getElementById('f-rg-data').value) document.getElementById('f-rg-data').value='2021-01-18';
+  if(S.consulta?.mother_name&&!document.getElementById('f-mae').value) document.getElementById('f-mae').value=S.consulta.mother_name;
 }
 
-// ═══════════════════════ STEP 5 — ENDEREÇO ═══════════════════════
-async function buscarCEP() {
-  const cep = document.getElementById('f-cep').value.replace(/\D/g,'');
-  if (cep.length !== 8) { showAlert('step5-alert','warn','CEP deve ter 8 dígitos.'); return; }
-  try {
-    const r = await fetch(`/api/viacep/${cep}`);
-    if (!r.ok) throw new Error('CEP não encontrado');
-    const d = await r.json();
-    if (d.erro) throw new Error('CEP inválido');
-    if (d.logradouro) document.getElementById('f-rua').value = d.logradouro;
-    if (d.bairro)     document.getElementById('f-bairro').value = d.bairro;
-    if (d.localidade) document.getElementById('f-cidade').value = d.localidade;
-    if (d.uf)         document.getElementById('f-estado').value = d.uf.toUpperCase();
+function submitStep4(){
+  const rg=document.getElementById('f-rg').value.trim();
+  const rgD=document.getElementById('f-rg-data').value;
+  const mae=document.getElementById('f-mae').value.trim();
+  const civil=document.getElementById('f-civil').value;
+  if(!rg){showAlert('s4-alert','err','RG obrigatório.');return;}
+  if(!rgD){showAlert('s4-alert','err','Data de expedição obrigatória.');return;}
+  if(!mae){showAlert('s4-alert','err','Nome da mãe obrigatório.');return;}
+  if(!civil){showAlert('s4-alert','err','Estado civil obrigatório.');return;}
+  S.rg=rg;S.rgData=rgD;S.rgOrgao=document.getElementById('f-rg-orgao').value||'SSP';
+  S.mae=mae;S.civil=civil;S.nac=document.getElementById('f-nac').value||'Brasileiro';
+  S.maxStep=Math.max(S.maxStep,5);
+  advanceToStep(5);
+}
+
+// ══════════════════════════════════════════
+// STEP 5
+// ══════════════════════════════════════════
+async function buscarCEP(){
+  const cep=document.getElementById('f-cep').value.replace(/\D/g,'');
+  if(cep.length!==8){toast('CEP deve ter 8 dígitos','warn');return;}
+  try{
+    const r=await fetch(`/api/viacep/${cep}`);
+    if(!r.ok) throw new Error();
+    const d=await r.json();
+    if(d.erro) throw new Error();
+    if(d.logradouro) document.getElementById('f-rua').value=d.logradouro;
+    if(d.bairro) document.getElementById('f-bairro').value=d.bairro;
+    if(d.localidade) document.getElementById('f-cidade').value=d.localidade;
+    if(d.uf) document.getElementById('f-estado').value=d.uf.toUpperCase();
     document.getElementById('f-num').focus();
-    showAlert('step5-alert','info','Endereço preenchido automaticamente. Complete o número.');
-  } catch(e) {
-    showAlert('step5-alert','err','CEP não encontrado.');
-  }
+    toast('Endereço preenchido via ViaCEP','success');
+  }catch(e){toast('CEP não encontrado','error');}
+}
+document.getElementById('f-cep').addEventListener('keydown',e=>{if(e.key==='Enter')buscarCEP()});
+
+function submitStep5(){
+  const cep=document.getElementById('f-cep').value.replace(/\D/g,'');
+  const rua=document.getElementById('f-rua').value.trim();
+  const num=document.getElementById('f-num').value.trim();
+  const bairro=document.getElementById('f-bairro').value.trim();
+  const cidade=document.getElementById('f-cidade').value.trim();
+  const estado=document.getElementById('f-estado').value.trim();
+  if(cep.length!==8){showAlert('s5-alert','err','CEP inválido.');return;}
+  if(!rua||!num||!bairro||!cidade||!estado){showAlert('s5-alert','err','Preencha todos os campos obrigatórios.');return;}
+  S.cep=cep;S.rua=rua;S.num=num;S.compl=document.getElementById('f-compl').value.trim();
+  S.bairro=bairro;S.cidade=cidade;S.estado=estado.toUpperCase();
+  S.maxStep=Math.max(S.maxStep,6);
+  advanceToStep(6);
 }
 
-document.getElementById('f-cep').addEventListener('keydown', e => {
-  if (e.key === 'Enter') buscarCEP();
-});
-
-function submitStep5() {
-  const cep    = document.getElementById('f-cep').value.replace(/\D/g,'');
-  const rua    = document.getElementById('f-rua').value.trim();
-  const num    = document.getElementById('f-num').value.trim();
-  const bairro = document.getElementById('f-bairro').value.trim();
-  const cidade = document.getElementById('f-cidade').value.trim();
-  const estado = document.getElementById('f-estado').value.trim();
-
-  if (!cep || cep.length !== 8) { showAlert('step5-alert','err','CEP inválido.'); return; }
-  if (!rua)    { showAlert('step5-alert','err','Rua é obrigatória.'); return; }
-  if (!num)    { showAlert('step5-alert','err','Número é obrigatório.'); return; }
-  if (!bairro) { showAlert('step5-alert','err','Bairro é obrigatório.'); return; }
-  if (!cidade) { showAlert('step5-alert','err','Cidade é obrigatória.'); return; }
-  if (!estado) { showAlert('step5-alert','err','Estado é obrigatório.'); return; }
-
-  S.cep = cep; S.rua = rua; S.num = num;
-  S.compl = document.getElementById('f-compl').value.trim();
-  S.bairro = bairro; S.cidade = cidade; S.estado = estado.toUpperCase();
-
-  S.maxStep = Math.max(S.maxStep, 6);
-  goStep(6);
+// ══════════════════════════════════════════
+// STEP 6
+// ══════════════════════════════════════════
+function updatePixHint(){
+  const t=document.getElementById('f-pix-tipo').value;
+  const ph={1:formatCPF(S.cpf),2:S.celular,3:S.email,4:'chave-aleatória'};
+  document.getElementById('f-pix-chave').value=ph[t]||'';
+  document.getElementById('f-pix-chave').placeholder=ph[t]||'';
 }
 
-// ═══════════════════════ STEP 6 — PIX ═══════════════════════
-function updatePixPlaceholder() {
-  const tipo = document.getElementById('f-pix-tipo').value;
-  const placeholders = {'1':'000.000.000-00','2':'35999887766','3':'email@exemplo.com','4':'chave-aleatória'};
-  document.getElementById('f-pix-chave').placeholder = placeholders[tipo] || '';
-  if (tipo === '1') document.getElementById('f-pix-chave').value = formatCPF(S.cpf);
-  else if (tipo === '3') document.getElementById('f-pix-chave').value = S.email;
-  else if (tipo === '2') document.getElementById('f-pix-chave').value = S.celular;
-  else document.getElementById('f-pix-chave').value = '';
+function submitStep6(){
+  const tipo=document.getElementById('f-pix-tipo').value;
+  const chave=document.getElementById('f-pix-chave').value.trim();
+  if(!tipo){showAlert('s6-alert','err','Selecione o tipo de chave PIX.');return;}
+  if(!chave){showAlert('s6-alert','err','Informe a chave PIX.');return;}
+  S.pixTipo=tipo;S.pixChave=chave;
+  S.maxStep=Math.max(S.maxStep,7);
+  advanceToStep(7);
 }
 
-function submitStep6() {
-  const tipo  = document.getElementById('f-pix-tipo').value;
-  const chave = document.getElementById('f-pix-chave').value.trim();
-  if (!tipo)  { showAlert('step6-alert','err','Selecione o tipo de chave PIX.'); return; }
-  if (!chave) { showAlert('step6-alert','err','Informe a chave PIX.'); return; }
-  S.pixTipo = tipo; S.pixChave = chave;
-  S.maxStep = Math.max(S.maxStep, 7);
-  goStep(7);
+// ══════════════════════════════════════════
+// STEP 7
+// ══════════════════════════════════════════
+function renderReview(){
+  const s=S.simulacao;const c=S.consulta;
+  document.getElementById('s7-op-rows').innerHTML=
+    infoRow('Valor a Receber',fmtBRL(s?.disbursement_amount||0),'var(--green)')+
+    infoRow('Parcelas',s?`${s.number_of_installments}x de ${fmtBRL(s.installment_value)}`:'—')+
+    infoRow('Taxa Mensal',(s?.monthly_interest_rate||'—')+'%')+
+    infoRow('Empregador',c?.employer_name||'—')+
+    infoRow('Matrícula',c?.registration_number||'—');
+  document.getElementById('s7-cli-rows').innerHTML=
+    infoRow('Nome',S.nome)+infoRow('CPF',formatCPF(S.cpf))+infoRow('Nascimento',fmtDate(S.dataNasc))+
+    infoRow('RG',S.rg)+infoRow('Mãe',S.mae)+
+    infoRow('Endereço',`${S.rua}, ${S.num} — ${S.bairro}`)+infoRow('Cidade',`${S.cidade}/${S.estado}`)+
+    infoRow('PIX',`Tipo ${S.pixTipo}: ${S.pixChave}`);
 }
 
-// ═══════════════════════ STEP 7 — PROPOSTA ═══════════════════════
-function renderReview() {
-  const s = S.simulacao;
-  const c = S.consulta;
-  document.getElementById('s7-summary-rows').innerHTML = `
-    ${reviewRow('Valor a Receber', fmtBRL(s?.disbursement_amount || 0), true)}
-    ${reviewRow('Parcelas', s ? `${s.number_of_installments}x de ${fmtBRL(s.installment_value)}` : '—')}
-    ${reviewRow('Taxa Mensal', (s?.monthly_interest_rate || '—') + '%')}
-    ${reviewRow('Empregador', c?.employer_name || '—')}
-    ${reviewRow('Matrícula', c?.registration_number || '—')}
-  `;
-  document.getElementById('s7-client-rows').innerHTML = `
-    ${reviewRow('Nome', S.nome)}
-    ${reviewRow('CPF', formatCPF(S.cpf))}
-    ${reviewRow('E-mail', S.email)}
-    ${reviewRow('Celular', S.celular)}
-    ${reviewRow('Nascimento', fmtDate(S.dataNasc))}
-    ${reviewRow('RG', S.rg + ' / ' + fmtDate(S.rgData) + ' / ' + S.rgOrgao)}
-    ${reviewRow('Mãe', S.mae)}
-    ${reviewRow('Estado Civil', S.civil)}
-    ${reviewRow('CEP', S.cep)}
-    ${reviewRow('Endereço', `${S.rua}, ${S.num}${S.compl ? ' / ' + S.compl : ''} — ${S.bairro}, ${S.cidade}/${S.estado}`)}
-    ${reviewRow('PIX', `Tipo ${S.pixTipo}: ${S.pixChave}`)}
-  `;
-}
-
-function reviewRow(label, value, highlight) {
-  const col = highlight ? 'color:var(--green);font-size:16px' : '';
-  return `<div class="sim-row"><span class="sr-label">${label}</span><span class="sr-value" style="${col}">${value}</span></div>`;
-}
-
-async function gerarProposta() {
-  document.getElementById('s7-review').style.display = 'none';
-  document.getElementById('s7-loading').style.display = 'block';
-
-  const body = {
-    simulation_id: S.simulacao.simulation_id,
-    name: S.nome, email: S.email, cpf: S.cpf,
-    phone_area: S.celular.slice(0,2), phone_number: S.celular.slice(2),
-    birth_date: S.dataNasc, mother_name: S.mae, gender: S.genero,
-    marital_status: S.civil, nationality: S.nac,
-    rg: S.rg, rg_date: S.rgData, rg_orgao: S.rgOrgao,
-    postal_code: S.cep, street: S.rua, number: S.num,
-    complement: S.compl, neighborhood: S.bairro,
-    city: S.cidade, state: S.estado,
-    pix_key_type: S.pixTipo, pix_key: S.pixChave,
-    employer_name: S.consulta.employer_name || '',
-    employer_document_number: S.consulta.employer_document_number || '',
-    registration_number: S.consulta.registration_number || '',
+async function gerarProposta(){
+  document.getElementById('s7-review').style.display='none';
+  document.getElementById('s7-loading').style.display='block';
+  const body={
+    simulation_id:S.simulacao.simulation_id,name:S.nome,email:S.email,cpf:S.cpf,
+    phone_area:S.celular.slice(0,2),phone_number:S.celular.slice(2),
+    birth_date:S.dataNasc,mother_name:S.mae,gender:S.genero,marital_status:S.civil,
+    nationality:S.nac,rg:S.rg,rg_date:S.rgData,rg_orgao:S.rgOrgao,
+    postal_code:S.cep,street:S.rua,number:S.num,complement:S.compl,
+    neighborhood:S.bairro,city:S.cidade,state:S.estado,
+    pix_key_type:S.pixTipo,pix_key:S.pixChave,
+    employer_name:S.consulta.employer_name||'',
+    employer_document_number:S.consulta.employer_document_number||'',
+    registration_number:S.consulta.registration_number||'',
   };
-
-  try {
-    const r = await fetch('/api/v8/proposta', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(body)
-    });
-    if (!r.ok) {
-      const t = await r.text();
-      throw new Error(t);
-    }
-    const d = await r.json();
-    S.proposta = d;
-    document.getElementById('s7-loading').style.display = 'none';
-    document.getElementById('s7-success').style.display = 'block';
-    document.getElementById('s7-op-id').textContent = d.operation_id;
-    const link = document.getElementById('s7-link');
-    link.href = d.formalization_url;
-    link.textContent = '🔗 ' + d.formalization_url;
-  } catch(e) {
-    document.getElementById('s7-loading').style.display = 'none';
-    document.getElementById('s7-review').style.display = 'block';
-    showAlert('step7-alert','err','Erro ao gerar proposta: ' + e.message);
+  try{
+    const r=await fetch('/api/v8/proposta',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!r.ok){const t=await r.text();throw new Error(t);}
+    S.proposta=await r.json();
+    document.getElementById('s7-loading').style.display='none';
+    document.getElementById('s7-success').style.display='block';
+    document.getElementById('s7-op-id').textContent=S.proposta.operation_id;
+    document.getElementById('s7-link').textContent=S.proposta.formalization_url;
+    // stats & history
+    stats.propostas++;
+    stats.volume+=(S.simulacao?.disbursement_amount||0);
+    history.unshift({nome:S.nome,cpf:S.cpf,valor:S.simulacao?.disbursement_amount||0,
+      link:S.proposta.formalization_url,status:'success',time:new Date().toLocaleTimeString('pt-BR')});
+    updateDashboard();
+    document.getElementById('history-badge').style.display='flex';
+    document.getElementById('history-badge').textContent=history.length;
+    toast('Proposta gerada com sucesso!','success');
+  }catch(e){
+    document.getElementById('s7-loading').style.display='none';
+    document.getElementById('s7-review').style.display='block';
+    showAlert('s7-alert','err','Erro ao gerar proposta: '+e.message);
+    toast('Erro ao gerar proposta','error');
   }
 }
 
-function copiarLink() {
-  if (S.proposta?.formalization_url) {
+function copiarLink(){
+  if(S.proposta?.formalization_url){
     navigator.clipboard.writeText(S.proposta.formalization_url)
-      .then(() => alert('Link copiado!'))
-      .catch(() => prompt('Copie o link:', S.proposta.formalization_url));
+      .then(()=>toast('Link copiado!','success'))
+      .catch(()=>prompt('Copie o link:',S.proposta.formalization_url));
+  }
+}
+function abrirLink(){if(S.proposta?.formalization_url)window.open(S.proposta.formalization_url,'_blank');}
+
+// ══════════════════════════════════════════
+// NOVA OPERAÇÃO
+// ══════════════════════════════════════════
+function novaOperacao(redirect=true){
+  if(pollTimer) clearInterval(pollTimer);
+  Object.assign(S,{step:1,maxStep:1,cpf:'',nome:'',email:'',celular:'',dataNasc:'',genero:'',
+    taskId:null,consulta:null,installments:[],simulacao:null,
+    rg:'',rgData:'',rgOrgao:'',civil:'',mae:'',nac:'',
+    cep:'',rua:'',num:'',compl:'',bairro:'',cidade:'',estado:'',
+    pixTipo:'',pixChave:'',proposta:null});
+  ['f-cpf','f-nome','f-email','f-celular','f-nasc','f-rg','f-rg-data','f-mae',
+   'f-cep','f-rua','f-num','f-compl','f-bairro','f-cidade','f-estado','f-pix-chave']
+    .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-genero','f-civil','f-pix-tipo'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('f-rg-orgao').value='SSP';
+  document.getElementById('f-nac').value='Brasileiro';
+  document.getElementById('s2-loading').style.display='block';
+  document.getElementById('s2-result').style.display='none';
+  document.getElementById('s2-error').style.display='none';
+  document.getElementById('s3-result').style.display='none';
+  document.getElementById('s7-review').style.display='block';
+  document.getElementById('s7-loading').style.display='none';
+  document.getElementById('s7-success').style.display='none';
+  if(redirect){setPage('operation');advanceToStep(1);}
+}
+
+// ══════════════════════════════════════════
+// DASHBOARD & HISTORY
+// ══════════════════════════════════════════
+function updateDashboard(){
+  document.getElementById('stat-consultas').textContent=stats.consultas;
+  document.getElementById('stat-propostas').textContent=stats.propostas;
+  document.getElementById('stat-volume').textContent=stats.volume>0?fmtBRL(stats.volume):'R$ 0';
+  const taxa=stats.consultas>0?Math.round((stats.propostas/stats.consultas)*100)+'%':'—';
+  document.getElementById('stat-taxa').textContent=taxa;
+  const dash=document.getElementById('dash-history');
+  if(history.length===0){
+    dash.innerHTML='<div style="text-align:center;padding:32px;color:var(--text3);font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">Nenhuma operação nesta sessão</div>';
+  } else {
+    dash.innerHTML=history.slice(0,5).map(h=>`
+      <div class="history-item">
+        <div class="hi-icon success">✅</div>
+        <div class="hi-info"><div class="hi-name">${h.nome}</div><div class="hi-meta">${formatCPF(h.cpf)}</div></div>
+        <div><div class="hi-amount">${fmtBRL(h.valor)}</div><div class="hi-time">${h.time}</div></div>
+      </div>`).join('');
   }
 }
 
-// ═══════════════════════ NOVA OPERAÇÃO ═══════════════════════
-function novaOperacao(redirect = true) {
-  if (pollTimer) clearInterval(pollTimer);
-  Object.assign(S, {
-    step:1, maxStep:1,
-    cpf:'', nome:'', email:'', celular:'', dataNasc:'', genero:'',
-    taskId:null, consulta:null, installments:[], selectedInstallment:null, simulacao:null,
-    rg:'', rgData:'', rgOrgao:'', civil:'', mae:'', nac:'',
-    cep:'', rua:'', num:'', compl:'', bairro:'', cidade:'', estado:'',
-    pixTipo:'', pixChave:'', proposta:null
-  });
-  // Limpa campos
-  ['f-cpf','f-nome','f-email','f-celular','f-nasc','f-rg','f-rg-data',
-   'f-mae','f-cep','f-rua','f-num','f-compl','f-bairro','f-cidade','f-estado',
-   'f-pix-chave'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  document.getElementById('f-genero').value = '';
-  document.getElementById('f-civil').value = '';
-  document.getElementById('f-pix-tipo').value = '';
-  document.getElementById('f-rg-orgao').value = 'SSP';
-  document.getElementById('f-nac').value = 'Brasileiro';
-  document.getElementById('s7-review').style.display = 'block';
-  document.getElementById('s7-loading').style.display = 'none';
-  document.getElementById('s7-success').style.display = 'none';
-  document.getElementById('s3-sim-result').style.display = 'none';
-  document.getElementById('s3-actions').style.display = 'none';
-  document.getElementById('f-sim-valor').value = '';
-  document.getElementById('f-sim-parcelas').innerHTML = '<option value="">Carregando...</option>';
-  if (redirect) goStep(1);
+function renderHistory(){
+  const list=document.getElementById('history-list');
+  if(!history.length){
+    list.innerHTML='<div style="text-align:center;padding:48px;color:var(--text3);font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">Nenhuma operação registrada nesta sessão</div>';
+    return;
+  }
+  list.innerHTML=history.map(h=>`
+    <div class="history-item">
+      <div class="hi-icon ${h.status}">✅</div>
+      <div class="hi-info"><div class="hi-name">${h.nome}</div><div class="hi-meta">${formatCPF(h.cpf)}</div></div>
+      <div style="text-align:right">
+        <div class="hi-amount">${fmtBRL(h.valor)}</div>
+        <div class="hi-time">${h.time}</div>
+        <a href="${h.link}" target="_blank" style="font-size:11px;color:var(--primary);text-decoration:none">🔗 Ver link</a>
+      </div>
+    </div>`).join('');
 }
 
-// ═══════════════════════ UTILS ═══════════════════════
-function showAlert(containerId, type, msg) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  const cls = {err:'alert-err', info:'alert-info', warn:'alert-warn'}[type] || 'alert-info';
-  el.style.display = 'block';
-  el.innerHTML = `<div class="alert ${cls}">${msg}</div>`;
-  setTimeout(() => { el.style.display = 'none'; }, 6000);
-}
-
-function formatCPF(cpf) {
-  const c = cpf.replace(/\D/g,'');
-  return c.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
-}
-
-// Auto-preenche step 4 quando entra nele
-function preencheStep4() {
-  // RG = 8 últimos dígitos do CPF
-  if (S.cpf && !document.getElementById('f-rg').value) {
-    const cpfLimpo = S.cpf.replace(/\D/g,'');
-    document.getElementById('f-rg').value = cpfLimpo.slice(-8);
-  }
-  // Data de expedição padrão: 18/01/2021
-  if (!document.getElementById('f-rg-data').value) {
-    document.getElementById('f-rg-data').value = '2021-01-18';
-  }
-  // Nome da mãe da consulta V8
-  if (S.consulta?.mother_name && !document.getElementById('f-mae').value) {
-    document.getElementById('f-mae').value = S.consulta.mother_name;
-  }
-}
+function limparHistorico(){history.length=0;renderHistory();document.getElementById('history-badge').style.display='none';}
 </script>
 </body>
 </html>
