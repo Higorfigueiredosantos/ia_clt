@@ -642,9 +642,13 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
             </div>
             <div class="form-row">
               <label>CPF *</label>
-              <div class="frow"><input id="f-cpf" type="text" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)" style="flex:1"/>
-              <button class="btn btn-ghost" onclick="buscarDadosCliente()">🔍 Buscar</button></div>
+              <div class="frow">
+                <input id="f-cpf" type="text" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)" style="flex:1"/>
+                <button class="btn btn-ghost" onclick="buscarDadosCliente()" title="Buscar dados V8">🔍 V8</button>
+                <button class="btn btn-ghost" id="btn-mc" onclick="buscarMulticorban()" title="Buscar dados Multicorban" style="background:linear-gradient(135deg,rgba(168,85,247,.15),rgba(168,85,247,.05));border-color:rgba(168,85,247,.3);color:var(--purple)">🗄️ API Dados</button>
+              </div>
             </div>
+            <div id="mc-result" style="display:none;background:var(--surface2);border:1px solid rgba(168,85,247,.3);border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px"></div>
             <div class="g2">
               <div class="form-row"><label>Nome Completo *</label><input id="f-nome" type="text" placeholder="Nome completo"/></div>
               <div class="form-row"><label>E-mail *</label><input id="f-email" type="email" placeholder="email@exemplo.com"/></div>
@@ -1184,6 +1188,51 @@ function showAlert(id,type,msg){
 // ══════════════════════════════════════════
 // STEP 1
 // ══════════════════════════════════════════
+async function buscarMulticorban(){
+  const cpf=document.getElementById('f-cpf').value.replace(/\D/g,'');
+  if(cpf.length!==11){toast('CPF deve ter 11 dígitos','warn');return;}
+  const btn=document.getElementById('btn-mc');
+  btn.disabled=true; btn.textContent='⏳ Buscando...';
+  const box=document.getElementById('mc-result');
+  box.style.display='none';
+  try{
+    const r=await fetch(`/api/multicorban/${cpf}`);
+    if(!r.ok){const t=await r.json();throw new Error(t.detail||'Não encontrado');}
+    const d=await r.json();
+    // Preenche campos do formulário
+    if(d.nome) document.getElementById('f-nome').value=d.nome;
+    if(d.data_nascimento_iso) document.getElementById('f-nasc').value=d.data_nascimento_iso;
+    if(d.sexo){document.getElementById('f-genero').value=d.sexo;}
+    if(d.nome_mae&&!document.getElementById('f-mae').value) document.getElementById('f-mae').value=d.nome_mae;
+    if(d.telefones&&d.telefones.length&&!document.getElementById('f-celular').value){
+      // usa o primeiro telefone com 10-11 dígitos sem 55
+      const tel=d.telefones.find(t=>t.length>=10&&t.length<=11)||d.telefones[0]||'';
+      document.getElementById('f-celular').value=tel.slice(-11);
+    }
+    // Exibe card resumo
+    box.style.display='block';
+    box.innerHTML=`
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:16px">🗄️</span>
+        <span style="font-weight:700;color:var(--purple)">Multicorban — Dados encontrados</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px">
+        <div style="color:var(--text2)">Nome</div><div style="font-weight:600">${d.nome||'—'}</div>
+        <div style="color:var(--text2)">Nascimento</div><div>${d.data_nascimento||'—'}</div>
+        <div style="color:var(--text2)">Sexo</div><div>${d.sexo==='M'?'Masculino':'Feminino'}</div>
+        <div style="color:var(--text2)">Mãe</div><div>${d.nome_mae||'—'}</div>
+        ${d.empresa?`<div style="color:var(--text2)">Empresa</div><div>${d.empresa}</div>`:''}
+        ${d.renda>0?`<div style="color:var(--text2)">Renda</div><div style="color:var(--green);font-weight:600">${fmtBRL(d.renda)}</div>`:''}
+        ${d.telefones?.length?`<div style="color:var(--text2)">Telefone(s)</div><div>${d.telefones.join(', ')}</div>`:''}
+      </div>`;
+    toast('Dados Multicorban preenchidos!','success');
+  }catch(e){
+    toast('Multicorban: '+e.message,'error');
+  }finally{
+    btn.disabled=false; btn.textContent='🗄️ API Dados';
+  }
+}
+
 async function buscarDadosCliente(){
   const cpf=document.getElementById('f-cpf').value.replace(/\D/g,'');
   if(cpf.length!==11){toast('CPF deve ter 11 dígitos','warn');return;}
@@ -1527,6 +1576,7 @@ function novaOperacao(redirect=true){
     rg:'',rgData:'',rgOrgao:'',civil:'',mae:'',nac:'',
     cep:'',rua:'',num:'',compl:'',bairro:'',cidade:'',estado:'',
     pixTipo:'',pixChave:'',pixBanco:'',proposta:null});
+  const mcBox=document.getElementById('mc-result');if(mcBox){mcBox.style.display='none';mcBox.innerHTML='';}
   ['f-cpf','f-nome','f-email','f-celular','f-nasc','f-rg','f-rg-data','f-mae',
    'f-cep','f-rua','f-num','f-compl','f-bairro','f-cidade','f-estado','f-pix-chave']
     .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});

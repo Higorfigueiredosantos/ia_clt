@@ -25,6 +25,8 @@ V8_BASE_URL  = "https://v8-bff-prod.yellowisland-b252a8a0.eastus.azurecontainera
 V8_CONFIG_ID = os.getenv("V8_CONFIG_ID", "fbbb3a06-05ca-4567-9a92-ce78cb4db796")
 PANEL_USER   = os.getenv("PANEL_USER", "admin")
 PANEL_PASS   = os.getenv("PANEL_PASS", "clt2024")
+MC_LOGIN     = os.getenv("MC_LOGIN", "andreluiz")
+MC_SENHA     = os.getenv("MC_SENHA", "Andre21*")
 
 # ─── V8 AUTH ─────────────────────────────────────────────────────────────────
 
@@ -524,6 +526,124 @@ def listar_operacoes(
     if not r.ok:
         raise HTTPException(status_code=r.status_code, detail=r.text)
     return r.json()
+
+# ─── MULTICORBAN — API DADOS ─────────────────────────────────────────────────
+
+import re as _re
+import warnings as _warnings
+_warnings.filterwarnings("ignore", message="Unverified HTTPS request")
+
+_MC_HEADERS = {
+    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "Accept": "application/json, text/javascript, */*; q=0.01",
+    "X-Requested-With": "XMLHttpRequest",
+    "Origin": "https://app.multicorban.com",
+    "Referer": "https://app.multicorban.com/search/form/geral",
+    "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5) AppleWebKit/537.36",
+}
+
+def _mc_first(html, patterns):
+    for p in patterns:
+        m = _re.search(p, html, _re.IGNORECASE)
+        if m:
+            return _re.sub(r'\s+', ' ', m.group(1).replace('&nbsp;', ' ')).strip()
+    return ""
+
+def _mc_digits(s):
+    return _re.sub(r'\D', '', str(s or ''))
+
+def _mc_money(s):
+    if not s: return 0.0
+    v = _re.sub(r'[^\d,.\-]', '', s).replace('.', '').replace(',', '.')
+    try: return float(v)
+    except: return 0.0
+
+@app.get("/api/multicorban/{cpf}")
+def multicorban_consulta(cpf: str):
+    cpf_limpo = _mc_digits(cpf).zfill(11)
+    sess = requests.Session()
+    try:
+        sess.post(
+            "https://app.multicorban.com/access/validateLogin",
+            headers=_MC_HEADERS,
+            data={"login": MC_LOGIN, "senha": MC_SENHA},
+            verify=False, timeout=15,
+        )
+        r = sess.post(
+            "https://app.multicorban.com/search/consult",
+            headers=_MC_HEADERS,
+            data={
+                "methodOperation": "dataBaseFgts",
+                "methodConsult": "cpf",
+                "dataConsult": cpf_limpo,
+                "dataOrgao": "", "CPF": "", "CPFRepresentante": "", "ddd": "", "telefone": "",
+            },
+            verify=False, timeout=20,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Multicorban indisponível: {e}")
+
+    try:
+        payload = r.json()
+    except:
+        payload = {"hash": r.text}
+
+    html = str(payload.get("hash", ""))
+
+    nome = _mc_first(html, [
+        r'id=["\']nome_beneficiario["\'][^>]*>\s*([^<]+)\s*<\/small>',
+        r'<p[^>]*>\s*Nome\s*<\/p>\s*<small[^>]*>\s*([^<]+)\s*<\/small>',
+    ])
+    data_nasc = _mc_first(html, [
+        r'<p[^>]*>\s*Data de Nascimento\s*<\/p>[\s\S]*?<small[^>]*>\s*([\d]{2}\/[\d]{2}\/[\d]{4})\s*<\/small>',
+    ])
+    sexo_raw = _mc_first(html, [
+        r'<p[^>]*>\s*SEXO\s*<\/p>[\s\S]*?<small[^>]*>\s*([^<]+)\s*<\/small>',
+    ])
+    sexo = "M" if "masc" in sexo_raw.lower() else "F"
+    nome_mae = _mc_first(html, [
+        r'<p[^>]*>\s*Nome da M[ãa]e\s*<\/p>[\s\S]*?<small[^>]*>\s*([^<]*)\s*<\/small>',
+    ])
+    renda_str = _mc_first(html, [
+        r'id=["\']renda["\'][^>]*>[\s\S]*?<small[^>]*text-success[^>]*>\s*(R\$\s*[\d\.,]+)\s*<\/small>',
+        r'<p[^>]*>\s*Renda\s*<\/p>[\s\S]*?<small[^>]*text-success[^>]*>\s*(R\$\s*[\d\.,]+)\s*<\/small>',
+    ])
+    empresa = _mc_first(html, [
+        r'<p[^>]*>\s*Raz[aã]o Social\s*<\/p>\s*<small[^>]*>\s*([^<]+)\s*<\/small>',
+    ])
+    cnpj = _mc_digits(_mc_first(html, [
+        r'<p[^>]*>\s*CNPJ\s*<\/p>[\s\S]*?<small[^>]*>\s*([\d.\-\/ ]+)\s*<\/small>',
+    ]))
+    data_admissao = _mc_first(html, [
+        r'<p[^>]*>\s*Data da Admiss[aã]o\s*<\/p>[\s\S]*?<small[^>]*>\s*([\d]{2}\/[\d]{2}\/[\d]{4})\s*<\/small>',
+    ])
+    phones_raw = _re.findall(r'api\.whatsapp\.com\/send\?[^"\']*phone=55(\d{10,13})', html, _re.IGNORECASE)
+    anchor_phones = _re.findall(r'class=["\']phone_with_ddd[^"\']*["\'][\s\S]*?>\s*(\d{10,13})\s*<\/a>', html, _re.IGNORECASE)
+    telefones = list(set([_mc_digits(t) for t in phones_raw + anchor_phones if t]))
+
+    # Converte data_nasc de DD/MM/YYYY → YYYY-MM-DD
+    data_nasc_iso = ""
+    if data_nasc and "/" in data_nasc:
+        parts = data_nasc.split("/")
+        if len(parts) == 3:
+            data_nasc_iso = f"{parts[2]}-{parts[1]}-{parts[0]}"
+
+    if not nome:
+        raise HTTPException(status_code=404, detail="CPF não encontrado no Multicorban")
+
+    return {
+        "nome": nome,
+        "data_nascimento": data_nasc,
+        "data_nascimento_iso": data_nasc_iso,
+        "sexo": sexo,
+        "nome_mae": nome_mae or "",
+        "renda": _mc_money(renda_str),
+        "empresa": empresa or "",
+        "cnpj": cnpj or "",
+        "data_admissao": data_admissao or "",
+        "telefones": telefones,
+        "has_data": True,
+    }
 
 # ─── VIA CEP ─────────────────────────────────────────────────────────────────
 
