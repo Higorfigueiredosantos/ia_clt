@@ -420,6 +420,7 @@ class PropostaBody(BaseModel):
     state: str
     pix_key_type: str
     pix_key: str
+    bank_id: str = ""
     employer_name: str
     employer_document_number: str
     registration_number: str
@@ -429,6 +430,31 @@ def proposta(body: PropostaBody):
     cpf_limpo = "".join(c for c in body.cpf if c.isdigit()).zfill(11)
     phone_num = "".join(c for c in body.phone_number if c.isdigit())
     cep_limpo = "".join(c for c in body.postal_code if c.isdigit())
+
+    # Mapeia código numérico para string exigida pela V8
+    _PIX_TYPE_MAP = {
+        "1": "cpf", "2": "telefone", "3": "e-mail", "4": "chave aleatória",
+        "cpf": "cpf", "telefone": "telefone", "e-mail": "e-mail", "chave aleatória": "chave aleatória",
+    }
+    pix_type = _PIX_TYPE_MAP.get(body.pix_key_type, "cpf")
+
+    # Normaliza chave PIX conforme tipo
+    pix_key = body.pix_key
+    if pix_type == "cpf":
+        pix_key = "".join(c for c in pix_key if c.isdigit())
+    elif pix_type == "telefone":
+        digits = "".join(c for c in pix_key if c.isdigit())
+        if not digits.startswith("55"):
+            digits = "55" + digits
+        pix_key = "+" + digits
+
+    bank_obj = {
+        "transfer_method": "pix",
+        "pix_key": pix_key,
+        "pix_key_type": pix_type,
+    }
+    if body.bank_id:
+        bank_obj["bank_id"] = body.bank_id
 
     payload = {
         "borrower": {
@@ -456,11 +482,7 @@ def proposta(body: PropostaBody):
             "document_issuer": body.rg_orgao or "SSP",
             "document_identification_type": "rg",
             "document_identification_number": body.rg,
-            "bank": {
-                "transfer_method": "pix",
-                "pix_key": body.pix_key,
-                "pix_key_type": body.pix_key_type,
-            },
+            "bank": bank_obj,
             "work_data": {
                 "employer_name": body.employer_name,
                 "employer_document_number": body.employer_document_number,
