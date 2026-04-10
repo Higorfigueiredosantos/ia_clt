@@ -273,6 +273,7 @@ def _montar_resultado(task_id, consult_id, dados):
             "mother_name": dados.get("motherName", ""),
             "recommended_installment_value": float(dados.get("recommendedSimulationInstallmentValue") or 0),
             "recommended_installment_number": dados.get("recommendedSimulationInstallmentNumber"),
+            "gender": dados.get("gender", ""),
         }
     }
 

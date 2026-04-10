@@ -1193,7 +1193,12 @@ async function buscarDadosCliente(){
     if(d.name) document.getElementById('f-nome').value=d.name;
     if(d.email) document.getElementById('f-email').value=d.email;
     if(d.birthDate) document.getElementById('f-nasc').value=d.birthDate.split('T')[0];
-    if(d.gender){const gv=d.gender.toUpperCase().startsWith('M')?'M':'F';document.getElementById('f-genero').value=gv;}
+    if(d.gender){
+      const g=String(d.gender).toUpperCase().trim();
+      const gv=(g==='M'||g==='MALE'||g==='MASCULINO'||g.startsWith('M'))?'M':'F';
+      document.getElementById('f-genero').value=gv;
+      console.log('[buscar] gender raw=',d.gender,'→',gv);
+    }
     if(d.phoneRegionCode&&d.phoneNumber) document.getElementById('f-celular').value=d.phoneRegionCode+d.phoneNumber;
     toast('Dados preenchidos automaticamente','success');
   } catch(e){ toast('Dados não encontrados, preencha manualmente','info'); }
@@ -1273,6 +1278,14 @@ function renderConsultaResult(){
   document.getElementById('s2-loading').style.display='none';
   document.getElementById('s2-result').style.display='block';
   const c=S.consulta;
+  // Preenche gênero se ainda não estiver selecionado
+  if(c.gender && !document.getElementById('f-genero').value){
+    const g=String(c.gender).toUpperCase().trim();
+    const gv=(g==='M'||g==='MALE'||g==='MASCULINO'||g.startsWith('M'))?'M':'F';
+    document.getElementById('f-genero').value=gv;
+    S.genero=gv;
+    console.log('[consulta] gender raw=',c.gender,'→',gv);
+  }
   document.getElementById('s2-nome').textContent=S.nome;
   document.getElementById('s2-cpf-fmt').textContent=formatCPF(S.cpf);
   document.getElementById('s2-margem').textContent=fmtBRL(c.margem_disponivel);
