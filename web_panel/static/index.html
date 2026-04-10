@@ -132,31 +132,61 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
 .login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--border)}
 
 /* ══════════════════════════════════════════
-   BANK SELECTION SCREEN
+   HUB SCREEN
 ══════════════════════════════════════════ */
-#screen-banks{flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;
-  background:radial-gradient(ellipse at 30% 40%,rgba(79,142,247,.05) 0%,transparent 60%),var(--bg)}
-.banks-header{text-align:center;margin-bottom:40px}
-.banks-header h2{font-size:26px;margin-bottom:8px}
-.banks-header p{color:var(--text2);font-size:14px}
-.banks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;
-  width:100%;max-width:900px;margin-bottom:32px}
-.bank-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:24px;
-  cursor:pointer;transition:.25s;text-align:center;position:relative;overflow:hidden}
-.bank-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--primary-glow),transparent);
-  opacity:0;transition:.25s}
-.bank-card:hover:not(.disabled){transform:translateY(-4px);border-color:var(--primary);box-shadow:0 12px 40px var(--primary-glow)}
-.bank-card:hover:not(.disabled)::before{opacity:1}
-.bank-card.disabled{opacity:.4;cursor:not-allowed}
-.bank-icon{width:52px;height:52px;border-radius:14px;margin:0 auto 14px;display:flex;
-  align-items:center;justify-content:center;font-size:22px;position:relative;z-index:1}
-.bank-icon.v8{background:linear-gradient(135deg,#1d4ed8,#3b82f6)}
-.bank-icon.facta{background:linear-gradient(135deg,#7c3aed,#a855f7)}
-.bank-icon.bmg{background:linear-gradient(135deg,#b45309,#d97706)}
-.bank-icon.daycoval{background:linear-gradient(135deg,#065f46,#10b981)}
-.bank-card h3{font-size:14px;margin-bottom:4px;position:relative;z-index:1}
-.bank-card p{font-size:11px;color:var(--text2);position:relative;z-index:1}
-.bank-soon{position:absolute;top:10px;right:10px}
+#screen-hub{flex-direction:column;min-height:100vh;background:var(--bg)}
+.hub-topbar{height:52px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 24px;gap:12px;flex-shrink:0}
+.hub-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px}
+.hub-logo-mark{width:28px;height:28px;background:linear-gradient(135deg,var(--primary),var(--purple));
+  border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+.hub-topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.hub-body{flex:1;display:flex;flex-direction:column;align-items:center;padding:48px 24px 40px;max-width:960px;margin:0 auto;width:100%}
+.hub-greeting{text-align:center;margin-bottom:48px}
+.hub-greeting h1{font-size:28px;font-weight:700;margin-bottom:6px}
+.hub-greeting p{color:var(--text2);font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px}
+.hub-pulse{width:8px;height:8px;background:var(--green);border-radius:50%;
+  box-shadow:0 0 8px var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.85)}}
+.hub-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;width:100%}
+@media(max-width:700px){.hub-grid{grid-template-columns:repeat(2,1fr)}}
+.hub-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  padding:28px 20px 24px;cursor:pointer;transition:.2s;text-align:center;position:relative;overflow:hidden}
+.hub-card::after{content:'';position:absolute;inset:0;opacity:0;transition:.2s;border-radius:16px}
+.hub-card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.hub-card:hover::after{opacity:1}
+.hub-card.c-blue::after{background:linear-gradient(135deg,rgba(79,142,247,.07),transparent)}
+.hub-card.c-purple::after{background:linear-gradient(135deg,rgba(168,85,247,.07),transparent)}
+.hub-card.c-green::after{background:linear-gradient(135deg,rgba(34,197,94,.07),transparent)}
+.hub-card.c-orange::after{background:linear-gradient(135deg,rgba(245,158,11,.07),transparent)}
+.hub-card.c-cyan::after{background:linear-gradient(135deg,rgba(6,182,212,.07),transparent)}
+.hub-card.c-red::after{background:linear-gradient(135deg,rgba(239,68,68,.07),transparent)}
+.hub-card.c-gray::after{background:linear-gradient(135deg,rgba(148,163,184,.07),transparent)}
+.hub-card:hover.c-blue{border-color:rgba(79,142,247,.35)}
+.hub-card:hover.c-purple{border-color:rgba(168,85,247,.35)}
+.hub-card:hover.c-green{border-color:rgba(34,197,94,.35)}
+.hub-card:hover.c-orange{border-color:rgba(245,158,11,.35)}
+.hub-card:hover.c-cyan{border-color:rgba(6,182,212,.35)}
+.hub-card:hover.c-red{border-color:rgba(239,68,68,.35)}
+.hub-icon{width:54px;height:54px;border-radius:14px;margin:0 auto 16px;
+  display:flex;align-items:center;justify-content:center;font-size:24px;position:relative;z-index:1}
+.hub-icon.c-blue{background:linear-gradient(135deg,#1d4ed8,#3b82f6)}
+.hub-icon.c-purple{background:linear-gradient(135deg,#6d28d9,#a855f7)}
+.hub-icon.c-green{background:linear-gradient(135deg,#065f46,#22c55e)}
+.hub-icon.c-orange{background:linear-gradient(135deg,#92400e,#f59e0b)}
+.hub-icon.c-cyan{background:linear-gradient(135deg,#0e7490,#06b6d4)}
+.hub-icon.c-red{background:linear-gradient(135deg,#991b1b,#ef4444)}
+.hub-icon.c-gray{background:linear-gradient(135deg,#334155,#64748b)}
+.hub-card h3{font-size:14px;font-weight:700;margin-bottom:4px;position:relative;z-index:1}
+.hub-card p{font-size:11px;color:var(--text2);position:relative;z-index:1;line-height:1.4}
+
+/* ── API DADOS PAGE ── */
+.api-dados-wrap{max-width:700px;margin:0 auto}
+.api-result-card{background:var(--surface2);border:1px solid rgba(168,85,247,.3);
+  border-radius:var(--radius);padding:20px;margin-top:20px}
+.api-result-grid{display:grid;grid-template-columns:140px 1fr;gap:6px 16px;font-size:13px}
+.api-result-grid .lbl{color:var(--text2)}
+.api-result-grid .val{font-weight:600}
 
 /* ══════════════════════════════════════════
    MAIN APP
@@ -408,42 +438,53 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
 </div>
 
 <!-- ══════════════════════════════════════════
-     BANK SELECTION
+     HUB LAUNCHER
 ══════════════════════════════════════════ -->
-<div id="screen-banks" class="screen">
-  <div class="banks-header animate-in">
-    <h2>Selecione o Banco</h2>
-    <p>Escolha a instituição financeira para iniciar a operação</p>
-  </div>
-  <div class="banks-grid animate-in">
-    <div class="bank-card" onclick="selectBank('v8')">
-      <div class="bank-icon v8">🏦</div>
-      <h3>V8 Sistema</h3>
-      <p>CLT Privado</p>
-      <span class="badge badge-green" style="margin-top:8px">● Ativo</span>
+<div id="screen-hub" class="screen">
+  <div class="hub-topbar">
+    <div class="hub-logo">
+      <div class="hub-logo-mark">TC</div>
+      TotalCred
     </div>
-    <div class="bank-card disabled">
-      <div class="bank-icon facta">🏛️</div>
-      <h3>Facta</h3>
-      <p>Consignado Público</p>
-      <span class="badge badge-gray bank-soon">Em breve</span>
-    </div>
-    <div class="bank-card disabled">
-      <div class="bank-icon bmg">🏢</div>
-      <h3>BMG</h3>
-      <p>Consignado</p>
-      <span class="badge badge-gray bank-soon">Em breve</span>
-    </div>
-    <div class="bank-card disabled">
-      <div class="bank-icon daycoval">💼</div>
-      <h3>Daycoval</h3>
-      <p>Crédito Pessoal</p>
-      <span class="badge badge-gray bank-soon">Em breve</span>
+    <div class="hub-topbar-right">
+      <button class="theme-btn" onclick="toggleTheme()" id="theme-btn-hub">🌙 Escuro</button>
+      <span style="font-size:12px;color:var(--text2)" id="hub-user-label"></span>
+      <div style="width:30px;height:30px;background:linear-gradient(135deg,var(--primary),var(--purple));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700" id="hub-avatar">U</div>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sair</button>
     </div>
   </div>
-  <div style="display:flex;gap:10px">
-    <button class="btn btn-ghost btn-sm" onclick="showScreen('login')">← Voltar</button>
-    <button class="btn btn-ghost btn-sm" onclick="showScreen('app');setPage('settings')">⚙️ Configurações</button>
+  <div class="hub-body animate-in">
+    <div class="hub-greeting">
+      <h1 id="hub-greeting-text">Boa noite 👋</h1>
+      <p><span class="hub-pulse"></span> Selecione uma opção para começar</p>
+    </div>
+    <div class="hub-grid">
+      <div class="hub-card c-purple" onclick="goApiDados()">
+        <div class="hub-icon c-purple">🔍</div>
+        <h3>API Dados</h3>
+        <p>Consulta Multicorban</p>
+      </div>
+      <div class="hub-card c-blue" onclick="goNovaOperacao()">
+        <div class="hub-icon c-blue">🏦</div>
+        <h3>CLT</h3>
+        <p>V8 e operações</p>
+      </div>
+      <div class="hub-card c-green" onclick="goPropostas()">
+        <div class="hub-icon c-green">📑</div>
+        <h3>Propostas</h3>
+        <p>Listar operações</p>
+      </div>
+      <div class="hub-card c-orange" onclick="goDashboard()">
+        <div class="hub-icon c-orange">📊</div>
+        <h3>Dashboard</h3>
+        <p>Relatórios e metas</p>
+      </div>
+      <div class="hub-card c-gray" onclick="goSettings()">
+        <div class="hub-icon c-gray">⚙️</div>
+        <h3>Configurações</h3>
+        <p>Sistema e integrações</p>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -476,12 +517,18 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
   <div class="app-body">
     <!-- SIDEBAR -->
     <div id="sidebar">
+      <div class="nav-item" onclick="showScreen('hub')" style="margin-bottom:4px;border:1px solid var(--border)">
+        <span class="nav-icon">⬅️</span> Hub
+      </div>
       <div class="nav-group-label">Menu</div>
+      <div class="nav-item" id="nav-api-dados" onclick="setPage('api-dados')">
+        <span class="nav-icon">🔍</span> API Dados
+      </div>
       <div class="nav-item active" id="nav-dashboard" onclick="setPage('dashboard')">
         <span class="nav-icon">📊</span> Dashboard
       </div>
       <div class="nav-item" id="nav-operation" onclick="setPage('operation')">
-        <span class="nav-icon">➕</span> Nova Operação
+        <span class="nav-icon">🏦</span> Nova Operação CLT
       </div>
       <div class="nav-item" id="nav-history" onclick="setPage('history')">
         <span class="nav-icon">📋</span> Histórico
@@ -510,6 +557,59 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
 
     <!-- MAIN CONTENT -->
     <div id="main-content">
+
+      <!-- ── API DADOS ── -->
+      <div class="page" id="page-api-dados">
+        <div class="page-header">
+          <div class="frow">
+            <div><h2>🔍 API Dados</h2><p class="muted">Consulta de dados via Multicorban</p></div>
+          </div>
+        </div>
+        <div class="api-dados-wrap">
+          <div class="card">
+            <div class="form-row">
+              <label>CPF</label>
+              <div class="frow">
+                <input id="ad-cpf" type="text" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)" style="flex:1" onkeydown="if(event.key==='Enter')buscarApiDados()"/>
+                <button class="btn btn-primary" id="ad-btn" onclick="buscarApiDados()">🔍 Consultar</button>
+              </div>
+            </div>
+          </div>
+          <div id="ad-loading" style="display:none;text-align:center;padding:32px;color:var(--text2)">
+            <div class="spinner" style="margin:0 auto 12px"></div>Consultando Multicorban...
+          </div>
+          <div id="ad-error" style="display:none"></div>
+          <div id="ad-result" style="display:none">
+            <div class="api-result-card">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="width:44px;height:44px;background:linear-gradient(135deg,#6d28d9,#a855f7);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px">🗄️</div>
+                <div>
+                  <div style="font-weight:700;font-size:15px" id="ad-nome-title">—</div>
+                  <div style="font-size:12px;color:var(--text2)">Multicorban — Dados encontrados</div>
+                </div>
+                <span class="badge badge-green" style="margin-left:auto">● Encontrado</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+                <div>
+                  <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:10px">Dados Pessoais</div>
+                  <div id="ad-rows-pessoal"></div>
+                </div>
+                <div>
+                  <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:10px">Trabalho</div>
+                  <div id="ad-rows-trabalho"></div>
+                </div>
+              </div>
+              <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:8px">Contatos</div>
+                <div id="ad-rows-contatos"></div>
+              </div>
+              <div style="margin-top:16px">
+                <button class="btn btn-primary btn-sm" onclick="usarDadosApiNoCLT()">➕ Usar em Nova Operação CLT</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- ── DASHBOARD ── -->
       <div class="page active" id="page-dashboard">
@@ -1107,7 +1207,13 @@ async function doLogin() {
       currentUser=u;
       document.getElementById('tb-user').textContent=u;
       document.getElementById('tb-avatar').textContent=u[0].toUpperCase();
-      showScreen('banks');
+      document.getElementById('hub-user-label').textContent=u;
+      document.getElementById('hub-avatar').textContent=u[0].toUpperCase();
+      // Saudação por horário
+      const h=new Date().getHours();
+      const saud=h<12?'Bom dia ☀️':h<18?'Boa tarde 🌤️':'Boa noite 👋';
+      document.getElementById('hub-greeting-text').textContent=saud;
+      showScreen('hub');
     } else { document.getElementById('l-err').style.display='flex'; }
   } catch(e){ document.getElementById('l-err').style.display='flex'; }
 }
@@ -1115,6 +1221,15 @@ document.getElementById('l-pass').addEventListener('keydown',e=>{if(e.key==='Ent
 document.getElementById('l-user').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
 
 function doLogout(){showScreen('login');novaOperacao(false);}
+
+// ══════════════════════════════════════════
+// HUB NAVIGATION
+// ══════════════════════════════════════════
+function goApiDados(){ showScreen('app'); setPage('api-dados'); }
+function goNovaOperacao(){ showScreen('app'); setPage('operation'); novaOperacao(false); }
+function goPropostas(){ showScreen('app'); setProp7dias(); setPage('proposals'); buscarOperacoes(); }
+function goDashboard(){ showScreen('app'); initDashboardDates(); setPage('dashboard'); carregarDashboardV8(); }
+function goSettings(){ showScreen('app'); setPage('settings'); }
 
 // ══════════════════════════════════════════
 // BANK SELECTION
@@ -1188,6 +1303,68 @@ function showAlert(id,type,msg){
 // ══════════════════════════════════════════
 // STEP 1
 // ══════════════════════════════════════════
+// ══════════════════════════════════════════
+// API DADOS PAGE
+// ══════════════════════════════════════════
+let _apiDadosResult = null;
+
+async function buscarApiDados(){
+  const cpf=document.getElementById('ad-cpf').value.replace(/\D/g,'');
+  if(cpf.length!==11){toast('CPF deve ter 11 dígitos','warn');return;}
+  const btn=document.getElementById('ad-btn');
+  btn.disabled=true; btn.textContent='⏳ Buscando...';
+  document.getElementById('ad-loading').style.display='block';
+  document.getElementById('ad-result').style.display='none';
+  document.getElementById('ad-error').style.display='none';
+  try{
+    const r=await fetch(`/api/multicorban/${cpf}`);
+    if(!r.ok){const t=await r.json();throw new Error(t.detail||'Não encontrado');}
+    _apiDadosResult=await r.json();
+    document.getElementById('ad-loading').style.display='none';
+    document.getElementById('ad-result').style.display='block';
+    document.getElementById('ad-nome-title').textContent=_apiDadosResult.nome||'—';
+    document.getElementById('ad-rows-pessoal').innerHTML=
+      infoRow('Nome',_apiDadosResult.nome||'—')+
+      infoRow('Nascimento',_apiDadosResult.data_nascimento||'—')+
+      infoRow('Sexo',_apiDadosResult.sexo==='M'?'Masculino':'Feminino')+
+      infoRow('Mãe',_apiDadosResult.nome_mae||'—');
+    document.getElementById('ad-rows-trabalho').innerHTML=
+      infoRow('Empresa',_apiDadosResult.empresa||'—')+
+      infoRow('Renda',_apiDadosResult.renda>0?fmtBRL(_apiDadosResult.renda):'—')+
+      infoRow('Admissão',_apiDadosResult.data_admissao||'—');
+    document.getElementById('ad-rows-contatos').innerHTML=
+      infoRow('Telefones',(_apiDadosResult.telefones&&_apiDadosResult.telefones.length)?_apiDadosResult.telefones.join(' • '):'—');
+    toast('Dados encontrados!','success');
+  }catch(e){
+    document.getElementById('ad-loading').style.display='none';
+    document.getElementById('ad-error').innerHTML=`<div class="alert alert-err">❌ ${e.message}</div>`;
+    document.getElementById('ad-error').style.display='block';
+    toast('Não encontrado: '+e.message,'error');
+  }finally{
+    btn.disabled=false; btn.textContent='🔍 Consultar';
+  }
+}
+
+function usarDadosApiNoCLT(){
+  if(!_apiDadosResult) return;
+  const d=_apiDadosResult;
+  showScreen('app');
+  novaOperacao(false);
+  setPage('operation');
+  // CPF
+  const cpfInput=document.getElementById('ad-cpf').value;
+  document.getElementById('f-cpf').value=cpfInput;
+  if(d.nome) document.getElementById('f-nome').value=d.nome;
+  if(d.data_nascimento_iso) document.getElementById('f-nasc').value=d.data_nascimento_iso;
+  if(d.sexo) document.getElementById('f-genero').value=d.sexo;
+  if(d.nome_mae) document.getElementById('f-mae').value=d.nome_mae;
+  if(d.telefones&&d.telefones.length){
+    const tel=d.telefones.find(t=>t.length>=10&&t.length<=11)||d.telefones[0]||'';
+    document.getElementById('f-celular').value=tel.slice(-11);
+  }
+  toast('Dados transferidos para Nova Operação!','success');
+}
+
 async function buscarMulticorban(){
   const cpf=document.getElementById('f-cpf').value.replace(/\D/g,'');
   if(cpf.length!==11){toast('CPF deve ter 11 dígitos','warn');return;}
@@ -1643,7 +1820,8 @@ let isDark = true;
 function toggleTheme(){
   isDark = !isDark;
   document.body.classList.toggle('light', !isDark);
-  document.getElementById('theme-btn').textContent = isDark ? '🌙 Escuro' : '☀️ Claro';
+  const label = isDark ? '🌙 Escuro' : '☀️ Claro';
+  ['theme-btn','theme-btn-hub'].forEach(id=>{const b=document.getElementById(id);if(b)b.textContent=label;});
   localStorage.setItem('theme', isDark ? 'dark' : 'light');
   if(chartVolume) chartVolume.destroy(), chartVolume=null;
   if(chartQtd) chartQtd.destroy(), chartQtd=null;
@@ -1651,7 +1829,7 @@ function toggleTheme(){
 (function(){
   const saved = localStorage.getItem('theme');
   if(saved === 'light'){ isDark=false; document.body.classList.add('light');
-    setTimeout(()=>{ const b=document.getElementById('theme-btn'); if(b) b.textContent='☀️ Claro'; },0); }
+    setTimeout(()=>{ ['theme-btn','theme-btn-hub'].forEach(id=>{const b=document.getElementById(id);if(b)b.textContent='☀️ Claro';}); },0); }
 })();
 
 // ══════════════════════════════════════════
