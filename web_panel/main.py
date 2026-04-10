@@ -2,11 +2,14 @@ import os
 import sys
 import time
 import uuid
+import json
 import asyncio
+import hashlib
 import requests
+from datetime import datetime, date
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional
-from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
+from typing import Optional, List
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,6 +30,51 @@ PANEL_USER   = os.getenv("PANEL_USER", "admin")
 PANEL_PASS   = os.getenv("PANEL_PASS", "clt2024")
 MC_LOGIN     = os.getenv("MC_LOGIN", "andreluiz")
 MC_SENHA     = os.getenv("MC_SENHA", "Andre21*")
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+os.makedirs(DATA_DIR, exist_ok=True)
+USERS_FILE    = os.path.join(DATA_DIR, "users.json")
+PROPOSALS_FILE = os.path.join(DATA_DIR, "proposals.json")
+
+# ─── PERSISTÊNCIA ─────────────────────────────────────────────────────────────
+
+def _load_json(path: str, default):
+    try:
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except: pass
+    return default
+
+def _save_json(path: str, data):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def _hash(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
+# ─── USUÁRIOS ─────────────────────────────────────────────────────────────────
+
+def _get_users() -> list:
+    users = _load_json(USERS_FILE, [])
+    # Garante que o admin sempre existe
+    if not any(u["username"] == PANEL_USER for u in users):
+        users.append({
+            "id": str(uuid.uuid4()),
+            "username": PANEL_USER,
+            "password_hash": _hash(PANEL_PASS),
+            "role": "admin",
+            "active": True,
+            "created_at": datetime.utcnow().isoformat(),
+        })
+        _save_json(USERS_FILE, users)
+    return users
+
+def _find_user(username: str):
+    return next((u for u in _get_users() if u["username"] == username), None)
+
+def _get_proposals() -> list:
+    return _load_json(PROPOSALS_FILE, [])
 
 # ─── V8 AUTH ─────────────────────────────────────────────────────────────────
 
@@ -302,9 +350,183 @@ class LoginBody(BaseModel):
 
 @app.post("/api/auth/login")
 def login(body: LoginBody):
-    if body.username == PANEL_USER and body.password == PANEL_PASS:
-        return {"ok": True, "token": "panel-ok"}
+    users = _get_users()
+    user = next((u for u in users if u["username"] == body.username), None)
+    if user and user.get("active", True) and user["password_hash"] == _hash(body.password):
+        return {"ok": True, "token": "panel-ok", "role": user.get("role","operator"), "username": user["username"]}
     raise HTTPException(status_code=401, detail="Usuário ou senha incorretos")
+
+# ─── GESTÃO DE USUÁRIOS ───────────────────────────────────────────────────────
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    role: str = "operator"
+
+class UserUpdate(BaseModel):
+    active: Optional[bool] = None
+    password: Optional[str] = None
+    role: Optional[str] = None
+
+def _require_admin(x_user: str = Header(default="")):
+    u = _find_user(x_user)
+    if not u or u.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Apenas administradores podem realizar esta ação")
+    return u
+
+@app.get("/api/users")
+def list_users(x_user: str = Header(default="")):
+    _require_admin(x_user)
+    users = _get_users()
+    proposals = _get_proposals()
+    result = []
+    for u in users:
+        user_props = [p for p in proposals if p.get("usuario") == u["username"]]
+        today = date.today().isoformat()
+        this_month = datetime.utcnow().strftime("%Y-%m")
+        props_hoje = [p for p in user_props if (p.get("created_at","")).startswith(today)]
+        props_mes  = [p for p in user_props if (p.get("created_at","")).startswith(this_month)]
+        vol_total  = sum(float(p.get("valor",0)) for p in user_props)
+        vol_mes    = sum(float(p.get("valor",0)) for p in props_mes)
+        result.append({
+            "id": u["id"],
+            "username": u["username"],
+            "role": u.get("role","operator"),
+            "active": u.get("active", True),
+            "created_at": u.get("created_at",""),
+            "total_propostas": len(user_props),
+            "propostas_hoje": len(props_hoje),
+            "propostas_mes": len(props_mes),
+            "volume_total": vol_total,
+            "volume_mes": vol_mes,
+            "ultima_proposta": user_props[-1].get("created_at","") if user_props else "",
+        })
+    return result
+
+@app.post("/api/users")
+def create_user(body: UserCreate, x_user: str = Header(default="")):
+    _require_admin(x_user)
+    users = _get_users()
+    if any(u["username"] == body.username for u in users):
+        raise HTTPException(status_code=400, detail="Usuário já existe")
+    new_user = {
+        "id": str(uuid.uuid4()),
+        "username": body.username,
+        "password_hash": _hash(body.password),
+        "role": body.role,
+        "active": True,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    users.append(new_user)
+    _save_json(USERS_FILE, users)
+    return {"ok": True, "id": new_user["id"]}
+
+@app.patch("/api/users/{user_id}")
+def update_user(user_id: str, body: UserUpdate, x_user: str = Header(default="")):
+    _require_admin(x_user)
+    users = _get_users()
+    user = next((u for u in users if u["id"] == user_id), None)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    if user["username"] == PANEL_USER and body.active is False:
+        raise HTTPException(status_code=400, detail="Não é possível desativar o admin principal")
+    if body.active is not None: user["active"] = body.active
+    if body.password:           user["password_hash"] = _hash(body.password)
+    if body.role:               user["role"] = body.role
+    _save_json(USERS_FILE, users)
+    return {"ok": True}
+
+@app.delete("/api/users/{user_id}")
+def delete_user(user_id: str, x_user: str = Header(default="")):
+    _require_admin(x_user)
+    users = _get_users()
+    user = next((u for u in users if u["id"] == user_id), None)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    if user["username"] == PANEL_USER:
+        raise HTTPException(status_code=400, detail="Não é possível excluir o admin principal")
+    users = [u for u in users if u["id"] != user_id]
+    _save_json(USERS_FILE, users)
+    return {"ok": True}
+
+# ─── REGISTRAR PROPOSTA ───────────────────────────────────────────────────────
+
+class RegistrarPropostaBody(BaseModel):
+    operation_id: str
+    usuario: str
+    cliente_nome: str
+    cliente_cpf: str
+    valor: float
+    parcelas: int
+    formalization_url: str
+
+@app.post("/api/propostas/registrar")
+def registrar_proposta(body: RegistrarPropostaBody):
+    proposals = _get_proposals()
+    proposals.append({
+        "id": str(uuid.uuid4()),
+        "operation_id": body.operation_id,
+        "usuario": body.usuario,
+        "cliente_nome": body.cliente_nome,
+        "cliente_cpf": body.cliente_cpf,
+        "valor": body.valor,
+        "parcelas": body.parcelas,
+        "formalization_url": body.formalization_url,
+        "created_at": datetime.utcnow().isoformat(),
+    })
+    _save_json(PROPOSALS_FILE, proposals)
+    return {"ok": True}
+
+@app.get("/api/propostas/historico")
+def historico_propostas(x_user: str = Header(default=""), usuario: str = "", dias: int = 30):
+    u = _find_user(x_user)
+    if not u:
+        raise HTTPException(status_code=403, detail="Não autorizado")
+    proposals = _get_proposals()
+    # Admin vê tudo, operator vê só os seus
+    if u.get("role") != "admin":
+        proposals = [p for p in proposals if p.get("usuario") == x_user]
+    elif usuario:
+        proposals = [p for p in proposals if p.get("usuario") == usuario]
+    # Filtro de dias
+    from_dt = datetime.utcnow().replace(hour=0,minute=0,second=0).isoformat()
+    if dias > 0:
+        import datetime as dt_mod
+        cutoff = (datetime.utcnow() - dt_mod.timedelta(days=dias)).isoformat()
+        proposals = [p for p in proposals if p.get("created_at","") >= cutoff]
+    return sorted(proposals, key=lambda p: p.get("created_at",""), reverse=True)
+
+@app.get("/api/relatorio/usuarios")
+def relatorio_usuarios(x_user: str = Header(default="")):
+    _require_admin(x_user)
+    proposals = _get_proposals()
+    users = _get_users()
+    this_month = datetime.utcnow().strftime("%Y-%m")
+    today = date.today().isoformat()
+    relatorio = []
+    for u in users:
+        ups = [p for p in proposals if p.get("usuario") == u["username"]]
+        dias_ativos = sorted(set((p.get("created_at",""))[:10] for p in ups if p.get("created_at")))
+        vol_by_day = {}
+        for p in ups:
+            d = (p.get("created_at",""))[:10]
+            vol_by_day[d] = vol_by_day.get(d, 0) + float(p.get("valor", 0))
+        media_dia = (sum(vol_by_day.values()) / len(vol_by_day)) if vol_by_day else 0
+        relatorio.append({
+            "username": u["username"],
+            "role": u.get("role","operator"),
+            "active": u.get("active",True),
+            "total_propostas": len(ups),
+            "propostas_hoje": len([p for p in ups if (p.get("created_at","")).startswith(today)]),
+            "propostas_mes": len([p for p in ups if (p.get("created_at","")).startswith(this_month)]),
+            "volume_total": sum(float(p.get("valor",0)) for p in ups),
+            "volume_mes": sum(float(p.get("valor",0)) for p in ups if (p.get("created_at","")).startswith(this_month)),
+            "media_volume_dia": round(media_dia, 2),
+            "dias_com_producao": len(dias_ativos),
+            "ultima_proposta": ups[-1].get("created_at","")[:16].replace("T"," ") if ups else "—",
+        })
+    relatorio.sort(key=lambda r: r["volume_mes"], reverse=True)
+    return relatorio
 
 # ─── DADOS CLIENTE ────────────────────────────────────────────────────────────
 
