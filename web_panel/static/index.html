@@ -654,7 +654,7 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
               <div class="form-row"><label>Data de Nascimento *</label><input id="f-nasc" type="date"/></div>
             </div>
             <div class="form-row" style="max-width:200px"><label>Gênero *</label>
-              <select id="f-genero"><option value="">Selecione</option><option value="M" selected>Masculino</option><option value="F">Feminino</option></select>
+              <select id="f-genero"><option value="">Selecione</option><option value="M">Masculino</option><option value="F">Feminino</option></select>
             </div>
             <div id="s1-alert"></div>
             <div class="frow" style="margin-top:8px">
@@ -1518,7 +1518,7 @@ function novaOperacao(redirect=true){
    'f-cep','f-rua','f-num','f-compl','f-bairro','f-cidade','f-estado','f-pix-chave']
     .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   ['f-pix-tipo','f-pix-banco'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  document.getElementById('f-genero').value='M';
+  document.getElementById('f-genero').value='';
   document.getElementById('f-civil').value='single';
   document.getElementById('f-rg-orgao').value='SSP';
   document.getElementById('f-nac').value='Brasileiro';
