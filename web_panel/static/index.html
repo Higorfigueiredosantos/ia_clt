@@ -1005,6 +1005,7 @@ label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-wei
               <div class="frow" style="justify-content:center;gap:8px;margin:12px 0">
                 <span class="badge badge-gray">ID: <span id="s7-op-id"></span></span>
                 <span class="badge badge-green">✓ Sucesso</span>
+                <span class="badge badge-blue">👤 <span id="s7-usuario"></span></span>
               </div>
               <div class="link-box" id="s7-link" onclick="copiarLink()">Clique para copiar o link</div>
               <div class="frow" style="justify-content:center;flex-wrap:wrap;gap:10px;margin-top:16px">
@@ -1716,12 +1717,14 @@ async function gerarProposta(){
     document.getElementById('s7-loading').style.display='none';
     document.getElementById('s7-success').style.display='block';
     document.getElementById('s7-op-id').textContent=S.proposta.operation_id;
+    document.getElementById('s7-usuario').textContent=currentUser;
     document.getElementById('s7-link').textContent=S.proposta.formalization_url;
     // stats & history
     stats.propostas++;
     stats.volume+=(S.simulacao?.disbursement_amount||0);
     history.unshift({nome:S.nome,cpf:S.cpf,valor:S.simulacao?.disbursement_amount||0,
-      link:S.proposta.formalization_url,status:'success',time:new Date().toLocaleTimeString('pt-BR')});
+      link:S.proposta.formalization_url,status:'success',
+      time:new Date().toLocaleTimeString('pt-BR'),usuario:currentUser});
     updateDashboard();
     document.getElementById('history-badge').style.display='flex';
     document.getElementById('history-badge').textContent=history.length;
@@ -1787,7 +1790,7 @@ function updateDashboard(){
     dash.innerHTML=history.slice(0,5).map(h=>`
       <div class="history-item">
         <div class="hi-icon success">✅</div>
-        <div class="hi-info"><div class="hi-name">${h.nome}</div><div class="hi-meta">${formatCPF(h.cpf)}</div></div>
+        <div class="hi-info"><div class="hi-name">${h.nome}</div><div class="hi-meta">${formatCPF(h.cpf)} • 👤 ${h.usuario||'—'}</div></div>
         <div><div class="hi-amount">${fmtBRL(h.valor)}</div><div class="hi-time">${h.time}</div></div>
       </div>`).join('');
   }
@@ -1802,7 +1805,7 @@ function renderHistory(){
   list.innerHTML=history.map(h=>`
     <div class="history-item">
       <div class="hi-icon ${h.status}">✅</div>
-      <div class="hi-info"><div class="hi-name">${h.nome}</div><div class="hi-meta">${formatCPF(h.cpf)}</div></div>
+      <div class="hi-info"><div class="hi-name">${h.nome}</div><div class="hi-meta">${formatCPF(h.cpf)} • 👤 ${h.usuario||'—'}</div></div>
       <div style="text-align:right">
         <div class="hi-amount">${fmtBRL(h.valor)}</div>
         <div class="hi-time">${h.time}</div>
